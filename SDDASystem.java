@@ -232,17 +232,38 @@ private static List<User> readUsersFromCSV(String filename, String role) {
             }
         }
 
-        String newLine = String.format("%s,%s,2-Room,%d,%d,3-Room,%d,%d,%s,%s,%s,%d,",
-                projectName, neighborhood, num2Room, price2Room, num3Room, price3Room,
-                openingDate.format(dateFormatter), closingDate.format(dateFormatter),
-                managerName, officerSlots);
+		String newLine = String.format("%s,%s,2-Room,%d,%d,3-Room,%d,%d,%s,%s,%s,%d,",
+		projectName, neighborhood, num2Room, price2Room, num3Room, price3Room,
+		openingDate.format(dateFormatter), closingDate.format(dateFormatter),
+		managerName, officerSlots);
 
-        try (PrintWriter pw = new PrintWriter(new FileWriter("ProjectList.csv", true))) {
-            pw.println(newLine);
-            System.out.printf("Project Created! Welcome %s.%n", managerName);
-        } catch (IOException e) {
-            System.err.println("Error writing to ProjectList.csv");
-        }
+		File projectFile = new File("ProjectList.csv");
+		boolean needsNewline = false;
+
+		if (projectFile.exists() && projectFile.length() > 0) {
+			try (RandomAccessFile raf = new RandomAccessFile(projectFile, "r")) {
+				long fileLength = raf.length();
+				if (fileLength > 0) {
+					raf.seek(fileLength - 1);
+					byte lastByte = raf.readByte();
+					if (lastByte != '\n') {
+						needsNewline = true;
+					}
+				}
+			} catch (IOException e) {
+				System.err.println("Error checking file for newline: " + e.getMessage());
+			}
+		}
+
+		try (PrintWriter pw = new PrintWriter(new FileWriter("ProjectList.csv", true))) {
+			if (needsNewline) {
+				pw.println(); // Ensure new project starts on a new line
+			}
+			pw.println(newLine);
+			System.out.printf("Project Created! Welcome %s.%n", managerName);
+		} catch (IOException e) {
+			System.err.println("Error writing to ProjectList.csv");
+		}
     }
 
     public static void main(String[] args) {
