@@ -265,8 +265,132 @@ private static List<User> readUsersFromCSV(String filename, String role) {
 			System.err.println("Error writing to ProjectList.csv");
 		}
     }
+	
+	    private static void ensureVisibilityColumnExists() {
+        File projectFile = new File("ProjectList.csv");
+        List<String> lines = new ArrayList<>();
+        boolean modified = false;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(projectFile))) {
+            String header = br.readLine();
+            if (header == null) {
+                header = "Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility";
+                lines.add(header);
+                modified = true;
+            } else {
+                if (!header.contains("Visibility")) {
+                    header += ",Visibility";
+                    modified = true;
+                }
+                lines.add(header);
+            }
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+
+                int lastComma = line.lastIndexOf(',');
+                if (lastComma == -1 || (!line.substring(lastComma + 1).trim().equalsIgnoreCase("true") && !line.substring(lastComma + 1).trim().equalsIgnoreCase("false"))) {
+                    line += ",false";
+                    modified = true;
+                }
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            try (PrintWriter pw = new PrintWriter(projectFile)) {
+                String header = "Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility";
+                pw.println(header);
+            } catch (IOException ex) {
+                System.err.println("Error creating ProjectList.csv: " + ex.getMessage());
+            }
+            return;
+        }
+
+        if (modified) {
+            try (PrintWriter pw = new PrintWriter(projectFile)) {
+                for (String line : lines) {
+                    pw.println(line);
+                }
+            } catch (IOException e) {
+                System.err.println("Error writing updated ProjectList.csv: " + e.getMessage());
+            }
+        }
+    }
+
+    private static void toggleVisibility(String managerName, Scanner scanner) {
+        List<String> projectLines = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader("ProjectList.csv"))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                projectLines.add(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading ProjectList.csv");
+            return;
+        }
+
+        if (projectLines.size() < 2) {
+            System.out.println("No projects available.");
+            return;
+        }
+
+        List<String> dataLines = projectLines.subList(1, projectLines.size());
+        List<String> projectNames = new ArrayList<>();
+        List<Boolean> visibilities = new ArrayList<>();
+
+        for (String line : dataLines) {
+            int lastComma = line.lastIndexOf(',');
+            if (lastComma == -1) continue;
+
+            String projectName = line.substring(0, line.indexOf(',')).trim();
+            String visibilityStr = line.substring(lastComma + 1).trim();
+            boolean visibility = Boolean.parseBoolean(visibilityStr);
+            projectNames.add(projectName);
+            visibilities.add(visibility);
+        }
+
+        System.out.println("=============================================================");
+        System.out.println("Index\tProject Name\t\tVisibility");
+        for (int i = 0; i < projectNames.size(); i++) {
+            System.out.printf("%d\t\t%s\t\t%s%n", i + 1, projectNames.get(i), visibilities.get(i));
+        }
+        System.out.println("=============================================================");
+
+        System.out.print("Enter number to toggle: ");
+        int selectedIndex;
+        try {
+            selectedIndex = Integer.parseInt(scanner.nextLine().trim()) - 1;
+            if (selectedIndex < 0 || selectedIndex >= projectNames.size()) {
+                System.out.println("Invalid index.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input.");
+            return;
+        }
+
+        String selectedLine = dataLines.get(selectedIndex);
+        int lastComma = selectedLine.lastIndexOf(',');
+        String newVisibility = !visibilities.get(selectedIndex) ? "true" : "false";
+        String updatedLine = selectedLine.substring(0, lastComma) + "," + newVisibility;
+
+        dataLines.set(selectedIndex, updatedLine);
+
+        try (PrintWriter pw = new PrintWriter(new FileWriter("ProjectList.csv"))) {
+            for (String line : projectLines) {
+                pw.println(line);
+            }
+        } catch (IOException e) {
+            System.err.println("Error writing to ProjectList.csv");
+            return;
+        }
+
+        System.out.printf("Success, %s is now %s! Welcome %s.%n",
+                projectNames.get(selectedIndex), newVisibility, managerName);
+    }
 
     public static void main(String[] args) {
+		ensureVisibilityColumnExists();
         allUsers.addAll(readUsersFromCSV("OfficerList.csv", "Officer"));
         allUsers.addAll(readUsersFromCSV("ManagerList.csv", "Manager"));
         allUsers.addAll(readUsersFromCSV("ApplicantList.csv", "Applicant"));
@@ -317,9 +441,10 @@ private static List<User> readUsersFromCSV(String filename, String role) {
             while (loggedIn) {
                 System.out.println("1) Logout");
                 System.out.println("2) Change Password");
-                if (currentUser.getRole().equals("Manager")) {
-                    System.out.println("3) Create Project");
-                }
+				if (currentUser.getRole().equals("Manager")) {
+					System.out.println("3) Create Project");
+					System.out.println("4) Toggle Visibility");
+				}
                 System.out.print("Choice: ");
                 String choice = scanner.nextLine().trim();
 
@@ -343,6 +468,13 @@ private static List<User> readUsersFromCSV(String filename, String role) {
                         }
                         createProject(currentUser.getName(), scanner);
                         break;
+					case "4":
+						if (!currentUser.getRole().equals("Manager")) {
+							System.out.println("Invalid choice.");
+							break;
+						}
+						toggleVisibility(currentUser.getName(), scanner);
+						break;
                     default:
                         System.out.println("Invalid choice.");
                 }
