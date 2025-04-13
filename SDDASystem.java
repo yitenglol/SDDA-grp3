@@ -388,6 +388,86 @@ private static List<User> readUsersFromCSV(String filename, String role) {
         System.out.printf("Success, %s is now %s! Welcome %s.%n",
                 projectNames.get(selectedIndex), newVisibility, managerName);
     }
+	
+	private static void viewEligibleProjects(User user) {
+        List<String[]> eligibleEntries = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader("ProjectList.csv"))) {
+            String line;
+            boolean headerSkipped = false;
+            while ((line = br.readLine()) != null) {
+                if (!headerSkipped) {
+                    headerSkipped = true;
+                    continue;
+                }
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                int lastComma = line.lastIndexOf(',');
+                if (lastComma == -1) continue;
+                String visibilityStr = line.substring(lastComma + 1).trim();
+                if (!visibilityStr.equalsIgnoreCase("true")) {
+                    continue;
+                }
+
+                String[] parts = line.split(",", -1);
+                if (parts.length < 14) {
+                    continue;
+                }
+
+                String projectName = parts[0].trim();
+                String type1 = parts[2].trim();
+                String priceStr1 = parts[4].trim();
+                String type2 = parts[5].trim();
+                String priceStr2 = parts[7].trim();
+
+                try {
+                    int price1 = Integer.parseInt(priceStr1);
+                    int price2 = Integer.parseInt(priceStr2);
+
+                    if (isEligibleForType(user, type1)) {
+                        eligibleEntries.add(new String[]{projectName, type1, String.valueOf(price1)});
+                    }
+                    if (isEligibleForType(user, type2)) {
+                        eligibleEntries.add(new String[]{projectName, type2, String.valueOf(price2)});
+                    }
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading ProjectList.csv");
+            return;
+        }
+
+        if (eligibleEntries.isEmpty()) {
+            System.out.printf("No Eligible Projects Welcome %s, %d, %s %s.%n",
+                    user.getName(), user.getAge(), user.getMaritalStatus(), user.getRole());
+        } else {
+            System.out.println("=============================================================");
+            System.out.println("Project Name\t\tType\t\tPrice");
+            for (String[] entry : eligibleEntries) {
+                System.out.printf("%s\t\t%s\t\t%s%n", entry[0], entry[1], entry[2]);
+            }
+            System.out.println("=============================================================");
+            System.out.printf("Welcome %s, %d, %s %s.%n",
+                    user.getName(), user.getAge(), user.getMaritalStatus(), user.getRole());
+        }
+    }
+
+    private static boolean isEligibleForType(User user, String type) {
+        String maritalStatus = user.getMaritalStatus();
+        int age = user.getAge();
+
+        if (type.equals("2-Room")) {
+            return (maritalStatus.equalsIgnoreCase("Married") && age >= 21) ||
+                   (maritalStatus.equalsIgnoreCase("Single") && age >= 35);
+        } else if (type.equals("3-Room")) {
+            return maritalStatus.equalsIgnoreCase("Married") && age >= 21;
+        }
+        return false;
+    }
+
 
     public static void main(String[] args) {
 		ensureVisibilityColumnExists();
@@ -438,47 +518,51 @@ private static List<User> readUsersFromCSV(String filename, String role) {
                     currentUser.getMaritalStatus(), currentUser.getRole());
 
             boolean loggedIn = true;
-            while (loggedIn) {
-                System.out.println("1) Logout");
-                System.out.println("2) Change Password");
+			while (loggedIn) {
+				System.out.println("1) Logout");
+				System.out.println("2) Change Password");
 				if (currentUser.getRole().equals("Manager")) {
 					System.out.println("3) Create Project");
 					System.out.println("4) Toggle Visibility");
+				} else if (currentUser.getRole().equals("Applicant") || currentUser.getRole().equals("Officer")) {
+					System.out.println("3) View Eligible Projects");
 				}
-                System.out.print("Choice: ");
-                String choice = scanner.nextLine().trim();
+				System.out.print("Choice: ");
+				String choice = scanner.nextLine().trim();
 
-                switch (choice) {
-                    case "1":
-                        loggedIn = false;
-                        break;
-                    case "2":
+				switch (choice) {
+					case "1":
+						loggedIn = false;
+						break;
+					case "2":
                         System.out.print("Enter new password: ");
                         String newPassword = scanner.nextLine().trim();
                         currentUser.setPassword(newPassword);
                         updateUserPassword(currentUser);
                         System.out.printf("Password change success! Welcome %s, %d, %s %s.%n",
-                                currentUser.getName(), currentUser.getAge(),
-                                currentUser.getMaritalStatus(), currentUser.getRole());
+								currentUser.getName(), currentUser.getAge(),
+								currentUser.getMaritalStatus(), currentUser.getRole());
                         break;
-                    case "3":
-                        if (!currentUser.getRole().equals("Manager")) {
-                            System.out.println("Invalid choice.");
-                            break;
-                        }
-                        createProject(currentUser.getName(), scanner);
-                        break;
-					case "4":
-						if (!currentUser.getRole().equals("Manager")) {
+					case "3":
+						if (currentUser.getRole().equals("Manager")) {
+							createProject(currentUser.getName(), scanner);
+						} else if (currentUser.getRole().equals("Applicant") || currentUser.getRole().equals("Officer")) {
+							viewEligibleProjects(currentUser);
+						} else {
 							System.out.println("Invalid choice.");
-							break;
 						}
-						toggleVisibility(currentUser.getName(), scanner);
 						break;
-                    default:
-                        System.out.println("Invalid choice.");
-                }
-            }
+					case "4":
+						if (currentUser.getRole().equals("Manager")) {
+							toggleVisibility(currentUser.getName(), scanner);
+						} else {
+							System.out.println("Invalid choice.");
+						}
+						break;
+					default:
+						System.out.println("Invalid choice.");
+				}
+			}
         }
         scanner.close();
     }
