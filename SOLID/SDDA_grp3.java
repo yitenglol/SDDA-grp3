@@ -61,6 +61,54 @@ class Manager extends User {
     }
 }
 
+class Project {
+    private String projectName;
+    private String neighborhood;
+    private String type1;
+    private int numUnitsType1;
+    private int priceType1;
+    private String type2;
+    private int numUnitsType2;
+    private int priceType2;
+    private String openingDate;
+    private String closingDate;
+    private String managerName;
+    private int officerSlots;
+    private List<String> officers;
+
+    public Project(String projectName, String neighborhood, String type1, int numUnitsType1, int priceType1,
+                   String type2, int numUnitsType2, int priceType2, String openingDate, String closingDate,
+                   String managerName, int officerSlots, List<String> officers) {
+        this.projectName = projectName;
+        this.neighborhood = neighborhood;
+        this.type1 = type1;
+        this.numUnitsType1 = numUnitsType1;
+        this.priceType1 = priceType1;
+        this.type2 = type2;
+        this.numUnitsType2 = numUnitsType2;
+        this.priceType2 = priceType2;
+        this.openingDate = openingDate;
+        this.closingDate = closingDate;
+        this.managerName = managerName;
+        this.officerSlots = officerSlots;
+        this.officers = officers != null ? new ArrayList<>(officers) : new ArrayList<>();
+    }
+
+    public String getProjectName() { return projectName; }
+    public String getNeighborhood() { return neighborhood; }
+    public String getType1() { return type1; }
+    public int getNumUnitsType1() { return numUnitsType1; }
+    public int getPriceType1() { return priceType1; }
+    public String getType2() { return type2; }
+    public int getNumUnitsType2() { return numUnitsType2; }
+    public int getPriceType2() { return priceType2; }
+    public String getOpeningDate() { return openingDate; }
+    public String getClosingDate() { return closingDate; }
+    public String getManagerName() { return managerName; }
+    public int getOfficerSlots() { return officerSlots; }
+    public List<String> getOfficers() { return new ArrayList<>(officers); }
+}
+
 class FileHandler {
     public static <T extends User> List<T> readUsersFromCSV(String filename, Class<T> userClass) {
         List<T> users = new ArrayList<>();
@@ -99,6 +147,91 @@ class FileHandler {
                         user.getAge(),
                         user.getMaritalStatus(),
                         user.getPassword());
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static List<Project> readProjectsFromCSV(String filename) {
+        List<Project> projects = new ArrayList<>();
+        File file = new File(filename);
+        if (!file.exists()) {
+            return projects;
+        }
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            boolean firstLine = true;
+            while ((line = br.readLine()) != null) {
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+                String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+                List<String> fields = new ArrayList<>();
+                for (String part : parts) {
+                    String field = part.trim();
+                    if (field.startsWith("\"") && field.endsWith("\"")) {
+                        field = field.substring(1, field.length() - 1);
+                    }
+                    fields.add(field);
+                }
+                if (fields.size() < 13) {
+                    continue;
+                }
+                String projectName = fields.get(0);
+                String neighborhood = fields.get(1);
+                String type1 = fields.get(2);
+                int numUnitsType1 = Integer.parseInt(fields.get(3));
+                int priceType1 = Integer.parseInt(fields.get(4));
+                String type2 = fields.get(5);
+                int numUnitsType2 = Integer.parseInt(fields.get(6));
+                int priceType2 = Integer.parseInt(fields.get(7));
+                String openingDate = fields.get(8);
+                String closingDate = fields.get(9);
+                String managerName = fields.get(10);
+                int officerSlots = Integer.parseInt(fields.get(11));
+                String officersStr = fields.get(12);
+                List<String> officers = new ArrayList<>();
+                if (!officersStr.isEmpty()) {
+                    String[] officerArray = officersStr.split(",");
+                    for (String officer : officerArray) {
+                        officers.add(officer.trim());
+                    }
+                }
+                Project project = new Project(projectName, neighborhood, type1, numUnitsType1, priceType1, type2, numUnitsType2, priceType2, openingDate, closingDate, managerName, officerSlots, officers);
+                projects.add(project);
+            }
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return projects;
+    }
+
+    public static boolean writeProjectsToCSV(String filename, List<Project> projects) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
+            pw.println("Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer");
+            for (Project project : projects) {
+                String officersStr = String.join(",", project.getOfficers());
+                if (officersStr.contains(",")) {
+                    officersStr = "\"" + officersStr + "\"";
+                }
+                pw.printf("%s,%s,%s,%d,%d,%s,%d,%d,%s,%s,%s,%d,%s%n",
+                        project.getProjectName(),
+                        project.getNeighborhood(),
+                        project.getType1(),
+                        project.getNumUnitsType1(),
+                        project.getPriceType1(),
+                        project.getType2(),
+                        project.getNumUnitsType2(),
+                        project.getPriceType2(),
+                        project.getOpeningDate(),
+                        project.getClosingDate(),
+                        project.getManagerName(),
+                        project.getOfficerSlots(),
+                        officersStr);
             }
             return true;
         } catch (IOException e) {
@@ -153,6 +286,93 @@ class PasswordChanger {
 }
 
 public class SDDA_grp3 {
+    private static void createProject(Manager manager, Scanner scanner) {
+        List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+		String projectName;
+		boolean projectExists;
+		
+		do {
+			System.out.print("Project Name: ");
+			String inputName = scanner.nextLine().trim();  // Temporary effectively final variable
+			projectName = inputName;
+			String finalProjectName = projectName;  // Final copy for lambda
+			projectExists = projects.stream().anyMatch(p -> p.getProjectName().equalsIgnoreCase(finalProjectName));
+			if (projectExists) {
+				System.out.println("Error! Project already exists");
+			}
+		} while (projectExists);
+
+        System.out.print("Neighbourhood: ");
+        String neighborhood = scanner.nextLine().trim();
+
+        int numUnitsType1;
+        do {
+            System.out.print("Number of 2-room units: ");
+            numUnitsType1 = Integer.parseInt(scanner.nextLine().trim());
+            if (numUnitsType1 < 0) {
+                System.out.println("Error! Number of units cannot be negative");
+            }
+        } while (numUnitsType1 < 0);
+
+        int priceType1;
+        do {
+            System.out.print("Selling price of 2-room units: ");
+            priceType1 = Integer.parseInt(scanner.nextLine().trim());
+            if (priceType1 <= 0) {
+                System.out.println("Error! Selling price must be positive");
+            }
+        } while (priceType1 <= 0);
+
+        int numUnitsType2;
+        do {
+            System.out.print("Number of 3-room units: ");
+            numUnitsType2 = Integer.parseInt(scanner.nextLine().trim());
+            if (numUnitsType2 < 0) {
+                System.out.println("Error! Number of units cannot be negative");
+            }
+        } while (numUnitsType2 < 0);
+
+        int priceType2;
+        do {
+            System.out.print("Selling price of 3-room units: ");
+            priceType2 = Integer.parseInt(scanner.nextLine().trim());
+            if (priceType2 <= 0) {
+                System.out.println("Error! Selling price must be positive");
+            }
+        } while (priceType2 <= 0);
+
+        String openingDate;
+        String closingDate;
+        do {
+            System.out.print("Application opening date: ");
+            openingDate = scanner.nextLine().trim();
+            System.out.print("Application closing date: ");
+            closingDate = scanner.nextLine().trim();
+            if (closingDate.compareTo(openingDate) < 0) {
+                System.out.println("Error! Closing date can't be earlier than opening date!");
+            }
+        } while (closingDate.compareTo(openingDate) < 0);
+
+        int officerSlots;
+        do {
+            System.out.print("HDB Officer Slots: ");
+            officerSlots = Integer.parseInt(scanner.nextLine().trim());
+            if (officerSlots < 0 || officerSlots > 10) {
+                System.out.println("Error! Officer slots cannot be negative or more than 10");
+            }
+        } while (officerSlots < 0 || officerSlots > 10);
+
+        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, new ArrayList<>());
+        projects.add(newProject);
+
+        boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
+        if (success) {
+            System.out.println("Project Created! Welcome " + manager.getName() + ", " + manager.getAge() + ", " + manager.getMaritalStatus() + " Manager.");
+        } else {
+            System.out.println("Error creating project.");
+        }
+    }
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         while (true) {
@@ -186,6 +406,9 @@ public class SDDA_grp3 {
             while (!logout) {
                 System.out.println("1) Logout");
                 System.out.println("2) Change Password");
+                if (user instanceof Manager) {
+                    System.out.println("3) Create Project");
+                }
                 System.out.print("Choice: ");
                 String choice = scanner.nextLine().trim();
                 switch (choice) {
@@ -202,6 +425,13 @@ public class SDDA_grp3 {
                                     user.getName(), user.getAge(), user.getMaritalStatus(), userType);
                         } else {
                             System.out.println("Password change failed.");
+                        }
+                        break;
+                    case "3":
+                        if (user instanceof Manager) {
+                            createProject((Manager) user, scanner);
+                        } else {
+                            System.out.println("Invalid choice.");
                         }
                         break;
                     default:
