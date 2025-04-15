@@ -75,10 +75,11 @@ class Project {
     private String managerName;
     private int officerSlots;
     private List<String> officers;
+    private boolean visibility;
 
     public Project(String projectName, String neighborhood, String type1, int numUnitsType1, int priceType1,
                    String type2, int numUnitsType2, int priceType2, String openingDate, String closingDate,
-                   String managerName, int officerSlots, List<String> officers) {
+                   String managerName, int officerSlots, List<String> officers, boolean visibility) {
         this.projectName = projectName;
         this.neighborhood = neighborhood;
         this.type1 = type1;
@@ -92,6 +93,7 @@ class Project {
         this.managerName = managerName;
         this.officerSlots = officerSlots;
         this.officers = officers != null ? new ArrayList<>(officers) : new ArrayList<>();
+        this.visibility = visibility;
     }
 
     public String getProjectName() { return projectName; }
@@ -107,6 +109,8 @@ class Project {
     public String getManagerName() { return managerName; }
     public int getOfficerSlots() { return officerSlots; }
     public List<String> getOfficers() { return new ArrayList<>(officers); }
+    public boolean getVisibility() { return visibility; }
+    public void setVisibility(boolean visibility) { this.visibility = visibility; }
 }
 
 class FileHandler {
@@ -164,9 +168,16 @@ class FileHandler {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             boolean firstLine = true;
+            boolean hasVisibilityColumn = false;
             while ((line = br.readLine()) != null) {
                 if (firstLine) {
                     firstLine = false;
+                    String[] headers = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+                    List<String> headerFields = new ArrayList<>();
+                    for (String header : headers) {
+                        headerFields.add(header.trim());
+                    }
+                    hasVisibilityColumn = headerFields.size() > 13 && headerFields.get(13).equalsIgnoreCase("Visibility");
                     continue;
                 }
                 String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
@@ -201,7 +212,12 @@ class FileHandler {
                         officers.add(officer.trim());
                     }
                 }
-                Project project = new Project(projectName, neighborhood, type1, numUnitsType1, priceType1, type2, numUnitsType2, priceType2, openingDate, closingDate, managerName, officerSlots, officers);
+                boolean visibility = false;
+                if (hasVisibilityColumn && fields.size() > 13) {
+                    String visibilityStr = fields.get(13);
+                    visibility = Boolean.parseBoolean(visibilityStr);
+                }
+                Project project = new Project(projectName, neighborhood, type1, numUnitsType1, priceType1, type2, numUnitsType2, priceType2, openingDate, closingDate, managerName, officerSlots, officers, visibility);
                 projects.add(project);
             }
         } catch (IOException | NumberFormatException e) {
@@ -212,13 +228,13 @@ class FileHandler {
 
     public static boolean writeProjectsToCSV(String filename, List<Project> projects) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
-            pw.println("Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer");
+            pw.println("Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility");
             for (Project project : projects) {
                 String officersStr = String.join(",", project.getOfficers());
                 if (officersStr.contains(",")) {
                     officersStr = "\"" + officersStr + "\"";
                 }
-                pw.printf("%s,%s,%s,%d,%d,%s,%d,%d,%s,%s,%s,%d,%s%n",
+                pw.printf("%s,%s,%s,%d,%d,%s,%d,%d,%s,%s,%s,%d,%s,%b%n",
                         project.getProjectName(),
                         project.getNeighborhood(),
                         project.getType1(),
@@ -231,7 +247,8 @@ class FileHandler {
                         project.getClosingDate(),
                         project.getManagerName(),
                         project.getOfficerSlots(),
-                        officersStr);
+                        officersStr,
+                        project.getVisibility());
             }
             return true;
         } catch (IOException e) {
@@ -288,19 +305,19 @@ class PasswordChanger {
 public class SDDA_grp3 {
     private static void createProject(Manager manager, Scanner scanner) {
         List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
-		String projectName;
-		boolean projectExists;
-		
-		do {
-			System.out.print("Project Name: ");
-			String inputName = scanner.nextLine().trim();  // Temporary effectively final variable
-			projectName = inputName;
-			String finalProjectName = projectName;  // Final copy for lambda
-			projectExists = projects.stream().anyMatch(p -> p.getProjectName().equalsIgnoreCase(finalProjectName));
-			if (projectExists) {
-				System.out.println("Error! Project already exists");
-			}
-		} while (projectExists);
+        String projectName;
+        boolean projectExists;
+
+        do {
+            System.out.print("Project Name: ");
+            String inputName = scanner.nextLine().trim();
+            projectName = inputName;
+            String finalProjectName = projectName;
+            projectExists = projects.stream().anyMatch(p -> p.getProjectName().equalsIgnoreCase(finalProjectName));
+            if (projectExists) {
+                System.out.println("Error! Project already exists");
+            }
+        } while (projectExists);
 
         System.out.print("Neighbourhood: ");
         String neighborhood = scanner.nextLine().trim();
@@ -362,7 +379,7 @@ public class SDDA_grp3 {
             }
         } while (officerSlots < 0 || officerSlots > 10);
 
-        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, new ArrayList<>());
+        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, new ArrayList<>(), false);
         projects.add(newProject);
 
         boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
@@ -370,6 +387,54 @@ public class SDDA_grp3 {
             System.out.println("Project Created! Welcome " + manager.getName() + ", " + manager.getAge() + ", " + manager.getMaritalStatus() + " Manager.");
         } else {
             System.out.println("Error creating project.");
+        }
+    }
+
+    private static void toggleVisibility(Manager manager, Scanner scanner) {
+        List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+        if (projects.isEmpty()) {
+            System.out.println("No projects to toggle.");
+            return;
+        }
+        System.out.println("=============================================================");
+        System.out.println("Index\tProject Name\t\tVisibility");
+        int index = 1;
+        for (Project p : projects) {
+            System.out.printf("%d\t\t%s\t\t%s%n", index, p.getProjectName(), p.getVisibility() ? "True" : "False");
+            index++;
+        }
+        System.out.println("=============================================================");
+        System.out.print("Enter number to toggle: ");
+        String input = scanner.nextLine().trim();
+        try {
+            int selectedIndex = Integer.parseInt(input);
+            if (selectedIndex < 1 || selectedIndex > projects.size()) {
+                System.out.println("Invalid index.");
+                return;
+            }
+            Project project = projects.get(selectedIndex - 1);
+            project.setVisibility(!project.getVisibility());
+            boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
+            if (success) {
+                System.out.println("=============================================================");
+                System.out.println("Index\tProject Name\t\tVisibility");
+                index = 1;
+                for (Project p : projects) {
+                    System.out.printf("%d\t\t%s\t\t%s%n", index, p.getProjectName(), p.getVisibility() ? "True" : "False");
+                    index++;
+                }
+                System.out.println("=============================================================");
+                System.out.printf("Success, %s is now %s! Welcome %s, %d, %s Manager.%n",
+                        project.getProjectName(),
+                        project.getVisibility() ? "Visible" : "Hidden",
+                        manager.getName(),
+                        manager.getAge(),
+                        manager.getMaritalStatus());
+            } else {
+                System.out.println("Failed to update project visibility.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a number.");
         }
     }
 
@@ -408,6 +473,7 @@ public class SDDA_grp3 {
                 System.out.println("2) Change Password");
                 if (user instanceof Manager) {
                     System.out.println("3) Create Project");
+                    System.out.println("4) Toggle Visibility");
                 }
                 System.out.print("Choice: ");
                 String choice = scanner.nextLine().trim();
@@ -430,6 +496,13 @@ public class SDDA_grp3 {
                     case "3":
                         if (user instanceof Manager) {
                             createProject((Manager) user, scanner);
+                        } else {
+                            System.out.println("Invalid choice.");
+                        }
+                        break;
+                    case "4":
+                        if (user instanceof Manager) {
+                            toggleVisibility((Manager) user, scanner);
                         } else {
                             System.out.println("Invalid choice.");
                         }
