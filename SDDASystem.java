@@ -511,7 +511,7 @@ private static List<User> readUsersFromCSV(String filename, String role) {
 		}
 
 		String selectedLine = dataLines.get(selectedIndex);
-		String[] parts = selectedLine.split(",", -1);
+		String[] parts = selectedLine.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
 		String projectName = parts[0];
 		String currentNeighborhood = parts[1];
 		int currentNumType1 = Integer.parseInt(parts[3]);
@@ -521,7 +521,9 @@ private static List<User> readUsersFromCSV(String filename, String role) {
 		String currentOpeningDate = parts[8];
 		String currentClosingDate = parts[9];
 		int currentOfficerSlots = Integer.parseInt(parts[11]);
-		String currentOfficers = parts.length > 12 ? parts[12].replace("\"", "") : "";
+		String currentOfficers = parts.length > 12 ? parts[12].replaceAll("^\"|\"$", "") : "";
+		String officersField = currentOfficers.contains(",") ? "\"" + currentOfficers + "\"" : currentOfficers;
+		String visibility = parts[parts.length - 1];
 		int currentOfficerCount = currentOfficers.isEmpty() ? 0 : currentOfficers.split(",").length;
 
 		System.out.printf("Neighbourhood (%s, empty to keep): ", currentNeighborhood);
@@ -542,9 +544,9 @@ private static List<User> readUsersFromCSV(String filename, String role) {
 
 		currentOfficerSlots = getOfficerSlotsInput(scanner, currentOfficerSlots, currentOfficerCount);
 
-		String updatedLine = String.format("%s,%s,2-Room,%d,%d,3-Room,%d,%d,%s,%s,%s,%d,\"%s\",%s",
-				projectName, newNeighborhood, currentNumType1, currentPriceType1, currentNumType2, currentPriceType2,
-				newOpeningDate, newClosingDate, parts[10], currentOfficerSlots, currentOfficers, parts[13]);
+		String updatedLine = String.format("%s,%s,2-Room,%d,%d,3-Room,%d,%d,%s,%s,%s,%d,%s,%s",
+        projectName, newNeighborhood, currentNumType1, currentPriceType1, currentNumType2, currentPriceType2,
+        newOpeningDate, newClosingDate, parts[10], currentOfficerSlots, officersField, visibility);
 
 		projectLines.set(selectedIndex + 1, updatedLine);
 
