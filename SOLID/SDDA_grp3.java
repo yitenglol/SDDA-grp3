@@ -1,12 +1,14 @@
-import java.util.*;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Scanner;
 
 abstract class User {
-    protected String name;
-    protected String nric;
-    protected int age;
-    protected String maritalStatus;
-    protected String password;
+    private String name;
+    private String nric;
+    private int age;
+    private String maritalStatus;
+    private String password;
 
     public User(String name, String nric, int age, String maritalStatus, String password) {
         this.name = name;
@@ -16,22 +18,24 @@ abstract class User {
         this.password = password;
     }
 
-    public String getNric() {
-        return nric;
+    public abstract String getCSVFilename();
+
+    public String getName() { return name; }
+    public String getNric() { return nric; }
+    public int getAge() { return age; }
+    public String getMaritalStatus() { return maritalStatus; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+}
+
+class Applicant extends User {
+    public Applicant(String name, String nric, int age, String maritalStatus, String password) {
+        super(name, nric, age, maritalStatus, password);
     }
 
-    public boolean checkPassword(String password) {
-        return this.password.equals(password);
-    }
-
-    public void changePassword(String newPassword) {
-        this.password = newPassword;
-    }
-
-    public abstract String getRole();
-
-    public String getDisplayInfo() {
-        return String.format("%s, %d, %s %s", name, age, maritalStatus, getRole());
+    @Override
+    public String getCSVFilename() {
+        return "ApplicantList.csv";
     }
 }
 
@@ -41,8 +45,8 @@ class Officer extends User {
     }
 
     @Override
-    public String getRole() {
-        return "Officer";
+    public String getCSVFilename() {
+        return "OfficerList.csv";
     }
 }
 
@@ -52,36 +56,22 @@ class Manager extends User {
     }
 
     @Override
-    public String getRole() {
-        return "Manager";
+    public String getCSVFilename() {
+        return "ManagerList.csv";
     }
 }
 
-class Applicant extends User {
-    public Applicant(String name, String nric, int age, String maritalStatus, String password) {
-        super(name, nric, age, maritalStatus, password);
-    }
-
-    @Override
-    public String getRole() {
-        return "Applicant";
-    }
-}
-
-class UserManager {
-    private Map<String, User> users = new HashMap<>();
-
-    public UserManager() {
-        loadUsersFromCSV("OfficerList.csv", Officer.class);
-        loadUsersFromCSV("ManagerList.csv", Manager.class);
-        loadUsersFromCSV("ApplicantList.csv", Applicant.class);
-    }
-
-    private void loadUsersFromCSV(String filename, Class<? extends User> userClass) {
+class FileHandler {
+    public static <T extends User> List<T> readUsersFromCSV(String filename, Class<T> userClass) {
+        List<T> users = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
-            br.readLine();
             String line;
+            boolean firstLine = true;
             while ((line = br.readLine()) != null) {
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
                 String[] parts = line.split(",");
                 if (parts.length < 5) continue;
                 String name = parts[0].trim();
@@ -89,101 +79,136 @@ class UserManager {
                 int age = Integer.parseInt(parts[2].trim());
                 String maritalStatus = parts[3].trim();
                 String password = parts[4].trim();
-
-                User user;
-                if (userClass == Officer.class) {
-                    user = new Officer(name, nric, age, maritalStatus, password);
-                } else if (userClass == Manager.class) {
-                    user = new Manager(name, nric, age, maritalStatus, password);
-                } else if (userClass == Applicant.class) {
-                    user = new Applicant(name, nric, age, maritalStatus, password);
-                } else {
-                    throw new IllegalArgumentException("Invalid user class");
-                }
-
-                users.put(nric, user);
+                T user = userClass.getDeclaredConstructor(String.class, String.class, int.class, String.class, String.class)
+                        .newInstance(name, nric, age, maritalStatus, password);
+                users.add(user);
             }
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + filename);
-        } catch (NumberFormatException e) {
-            System.err.println("Error parsing age in file: " + filename);
+        } catch (IOException | ReflectiveOperationException e) {
+            e.printStackTrace();
         }
+        return users;
     }
 
-    public User getUserByNric(String nric) {
-        return users.get(nric);
+    public static boolean writeUsersToCSV(String filename, List<? extends User> users) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
+            pw.println("Name,NRIC,Age,Marital Status,Password");
+            for (User user : users) {
+                pw.printf("%s,%s,%d,%s,%s%n",
+                        user.getName(),
+                        user.getNric(),
+                        user.getAge(),
+                        user.getMaritalStatus(),
+                        user.getPassword());
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
 
-class AuthenticationService {
-    private UserManager userManager;
-
-    public AuthenticationService(UserManager userManager) {
-        this.userManager = userManager;
+class NRICValidator {
+    public static boolean isValid(String nric) {
+        return nric != null && nric.matches("^[STst]\\d{7}[A-Za-z]$");
     }
+}
 
-    public User authenticate(String nric, String password) {
-        User user = userManager.getUserByNric(nric);
-        if (user == null || !user.checkPassword(password)) {
-            return null;
+class LoginManager {
+    public static User findUserByNRIC(String nric) {
+        List<Applicant> applicants = FileHandler.readUsersFromCSV("ApplicantList.csv", Applicant.class);
+        for (Applicant a : applicants) {
+            if (a.getNric().equalsIgnoreCase(nric)) return a;
         }
-        return user;
+
+        List<Officer> officers = FileHandler.readUsersFromCSV("OfficerList.csv", Officer.class);
+        for (Officer o : officers) {
+            if (o.getNric().equalsIgnoreCase(nric)) return o;
+        }
+
+        List<Manager> managers = FileHandler.readUsersFromCSV("ManagerList.csv", Manager.class);
+        for (Manager m : managers) {
+            if (m.getNric().equalsIgnoreCase(nric)) return m;
+        }
+
+        return null;
+    }
+}
+
+class PasswordChanger {
+    public static boolean changePassword(User user) {
+        String csvFilename = user.getCSVFilename();
+        List<? extends User> users = FileHandler.readUsersFromCSV(csvFilename, user.getClass());
+        boolean found = false;
+        for (User u : users) {
+            if (u.getNric().equalsIgnoreCase(user.getNric())) {
+                u.setPassword(user.getPassword());
+                found = true;
+                break;
+            }
+        }
+        if (!found) return false;
+        return FileHandler.writeUsersToCSV(csvFilename, users);
     }
 }
 
 public class SDDA_grp3 {
     public static void main(String[] args) {
-        UserManager userManager = new UserManager();
-        AuthenticationService authService = new AuthenticationService(userManager);
         Scanner scanner = new Scanner(System.in);
-
         while (true) {
             System.out.println("Welcome to SDDA-grp3 system.");
             System.out.print("Login (enter q to quit): ");
-            String nric = scanner.nextLine().trim();
-            if (nric.equalsIgnoreCase("q")) {
+            String nricInput = scanner.nextLine().trim();
+            if (nricInput.equalsIgnoreCase("q")) {
                 System.out.println("Goodbye!");
                 break;
             }
-
-            System.out.print("Password: ");
-            String password = scanner.nextLine().trim();
-
-            User user = authService.authenticate(nric, password);
-            if (user == null) {
-                User exists = userManager.getUserByNric(nric);
-                if (exists == null) {
-                    System.out.println("User not exist!");
-                } else {
-                    System.out.println("Wrong password!");
-                }
-                System.out.println();
+            if (!NRICValidator.isValid(nricInput)) {
+                System.out.println("Invalid format!");
                 continue;
             }
-
-            System.out.println("Success! Welcome " + user.getDisplayInfo() + ".");
-            handleUserMenu(user, scanner);
-        }
-        scanner.close();
-    }
-
-    private static void handleUserMenu(User user, Scanner scanner) {
-        while (true) {
-            System.out.println("1) Logout");
-            System.out.println("2) Change Password");
-            System.out.print("Choice: ");
-            String choice = scanner.nextLine().trim();
-
-            if (choice.equals("1")) {
-                return;
-            } else if (choice.equals("2")) {
-                System.out.print("Enter new password: ");
-                String newPassword = scanner.nextLine().trim();
-                user.changePassword(newPassword);
-                System.out.println("Password change success! Welcome " + user.getDisplayInfo() + ".");
-            } else {
-                System.out.println("Invalid choice.");
+            User user = LoginManager.findUserByNRIC(nricInput);
+            if (user == null) {
+                System.out.println("User not exist!");
+                continue;
+            }
+            System.out.print("Password: ");
+            String passwordInput = scanner.nextLine().trim();
+            if (!user.getPassword().equals(passwordInput)) {
+                System.out.println("Wrong password!");
+                continue;
+            }
+            String userType = user instanceof Manager ? "Manager" :
+                    user instanceof Officer ? "Officer" : "Applicant";
+            System.out.printf("Success! Welcome %s, %d, %s %s.%n",
+                    user.getName(), user.getAge(), user.getMaritalStatus(), userType);
+            boolean logout = false;
+            while (!logout) {
+                System.out.println("1) Logout");
+                System.out.println("2) Change Password");
+                System.out.print("Choice: ");
+                String choice = scanner.nextLine().trim();
+                switch (choice) {
+                    case "1":
+                        logout = true;
+                        break;
+                    case "2":
+                        System.out.print("Enter new password: ");
+                        String newPassword = scanner.nextLine().trim();
+                        user.setPassword(newPassword);
+                        boolean success = PasswordChanger.changePassword(user);
+                        if (success) {
+                            System.out.printf("Password change success! Welcome %s, %d, %s %s.%n",
+                                    user.getName(), user.getAge(), user.getMaritalStatus(), userType);
+                        } else {
+                            System.out.println("Password change failed.");
+                        }
+                        break;
+                    default:
+                        System.out.println("Invalid choice.");
+                }
             }
         }
+        scanner.close();
     }
 }
