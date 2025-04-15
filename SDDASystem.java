@@ -13,16 +13,18 @@ class User {
     private String maritalStatus;
     private String password;
     private String role;
+    private String filter;
 
-    public User(String name, String nric, int age, String maritalStatus, String password, String role) {
+    public User(String name, String nric, int age, String maritalStatus, String password, String role, String filter) {
         this.name = name;
         this.nric = nric;
         this.age = age;
         this.maritalStatus = maritalStatus;
         this.password = password;
         this.role = role;
+        this.filter = filter;
     }
-
+	
     public String getName() { return name; }
     public String getNric() { return nric; }
     public int getAge() { return age; }
@@ -31,14 +33,73 @@ class User {
     public String getRole() { return role; }
 
     public void setPassword(String password) { this.password = password; }
+	public String getFilter() { return filter; }
+    public void setFilter(String filter) { this.filter = filter; }
 
     public String toCSVString() {
-        return String.format("%s,%s,%d,%s,%s", name, nric, age, maritalStatus, password);
+        return String.format("%s,%s,%d,%s,%s,%s", name, nric, age, maritalStatus, password, filter);
     }
 }
 
 public class SDDASystem {
     private static List<User> allUsers = new ArrayList<>();
+
+private static void ensureFilterColumnExists(String filename) {
+        File userFile = new File(filename);
+        List<String> lines = new ArrayList<>();
+        boolean modified = false;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(userFile))) {
+            String header = br.readLine();
+            if (header == null) {
+                header = "Name,NRIC,Age,Marital Status,Password,Filter";
+                lines.add(header);
+                modified = true;
+            } else {
+                if (!header.contains("Filter")) {
+                    header += ",Filter";
+                    modified = true;
+                }
+                lines.add(header);
+            }
+
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+
+                String[] parts = line.split(",", -1); // Keep trailing empty parts
+                if (parts.length < 6) {
+                    line += ",None";
+                    modified = true;
+                }
+                lines.add(line);
+            }
+        } catch (IOException e) {
+            if (!userFile.exists()) {
+                try (PrintWriter pw = new PrintWriter(userFile)) {
+                    pw.println("Name,NRIC,Age,Marital Status,Password,Filter");
+                    modified = true;
+                } catch (IOException ex) {
+                    System.err.println("Error creating " + filename + ": " + ex.getMessage());
+                    return;
+                }
+            } else {
+                System.err.println("Error reading " + filename + ": " + e.getMessage());
+                return;
+            }
+        }
+
+        if (modified) {
+            try (PrintWriter pw = new PrintWriter(new FileWriter(userFile))) {
+                for (String line : lines) {
+                    pw.println(line);
+                }
+            } catch (IOException e) {
+                System.err.println("Error writing to " + filename + ": " + e.getMessage());
+            }
+        }
+    }
+
 
 private static List<User> readUsersFromCSV(String filename, String role) {
         List<User> users = new ArrayList<>();
@@ -50,14 +111,15 @@ private static List<User> readUsersFromCSV(String filename, String role) {
                     headerSkipped = true;
                     continue;
                 }
-                String[] parts = line.split(",");
+                String[] parts = line.split(",", -1);
                 if (parts.length < 5) continue;
                 String name = parts[0].trim();
                 String nric = parts[1].trim();
                 int age = Integer.parseInt(parts[2].trim());
                 String maritalStatus = parts[3].trim();
                 String password = parts[4].trim();
-                users.add(new User(name, nric, age, maritalStatus, password, role));
+                String filter = (parts.length >= 6) ? parts[5].trim() : "None";
+                users.add(new User(name, nric, age, maritalStatus, password, role, filter));
             }
         } catch (IOException e) {
             System.err.println("Error reading file: " + filename);
@@ -89,8 +151,8 @@ private static List<User> readUsersFromCSV(String filename, String role) {
             }
         }
 
-        try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
-            pw.println("Name,NRIC,Age,Marital Status,Password");
+		try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
+            pw.println("Name,NRIC,Age,Marital Status,Password,Filter");
             for (User u : usersInRole) {
                 pw.println(u.toCSVString());
             }
@@ -640,6 +702,9 @@ private static List<User> readUsersFromCSV(String filename, String role) {
 }								
     public static void main(String[] args) {
 		ensureVisibilityColumnExists();
+		ensureFilterColumnExists("OfficerList.csv");
+        ensureFilterColumnExists("ManagerList.csv");
+        ensureFilterColumnExists("ApplicantList.csv");
         allUsers.addAll(readUsersFromCSV("OfficerList.csv", "Officer"));
         allUsers.addAll(readUsersFromCSV("ManagerList.csv", "Manager"));
         allUsers.addAll(readUsersFromCSV("ApplicantList.csv", "Applicant"));
