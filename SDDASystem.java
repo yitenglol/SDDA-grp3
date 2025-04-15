@@ -492,7 +492,7 @@ private static List<User> readUsersFromCSV(String filename, String role) {
 		for (int i = 0; i < dataLines.size(); i++) {
 			String[] parts = dataLines.get(i).split(",", -1);
 			String projectName = parts[0];
-			String visibility = parts.length > 13 ? parts[13] : "false";
+			String visibility = parts.length > 0 ? parts[parts.length - 1].trim() : "false";
 			System.out.printf("%d\t\t%s\t\t%s%n", i + 1, projectName, visibility);
 		}
 		System.out.println("=============================================================");
