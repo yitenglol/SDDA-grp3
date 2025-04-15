@@ -469,6 +469,173 @@ private static List<User> readUsersFromCSV(String filename, String role) {
     }
 
 
+	private static void editProject(String managerName, Scanner scanner) {
+		List<String> projectLines = new ArrayList<>();
+		try (BufferedReader br = new BufferedReader(new FileReader("ProjectList.csv"))) {
+			String line;
+			while ((line = br.readLine()) != null) {
+				projectLines.add(line);
+			}
+		} catch (IOException e) {
+			System.err.println("Error reading ProjectList.csv");
+			return;
+		}
+
+		if (projectLines.size() < 2) {
+			System.out.println("No projects available.");
+			return;
+		}
+
+		List<String> dataLines = projectLines.subList(1, projectLines.size());
+		System.out.println("=============================================================");
+		System.out.println("Index\tProject Name\t\tVisibility");
+		for (int i = 0; i < dataLines.size(); i++) {
+			String[] parts = dataLines.get(i).split(",", -1);
+			String projectName = parts[0];
+			String visibility = parts.length > 13 ? parts[13] : "false";
+			System.out.printf("%d\t\t%s\t\t%s%n", i + 1, projectName, visibility);
+		}
+		System.out.println("=============================================================");
+
+		System.out.print("Enter number to edit: ");
+		int selectedIndex;
+		try {
+			selectedIndex = Integer.parseInt(scanner.nextLine().trim()) - 1;
+			if (selectedIndex < 0 || selectedIndex >= dataLines.size()) {
+				System.out.println("Invalid index.");
+				return;
+			}
+		} catch (NumberFormatException e) {
+			System.out.println("Invalid input.");
+			return;
+		}
+
+		String selectedLine = dataLines.get(selectedIndex);
+		String[] parts = selectedLine.split(",", -1);
+		String projectName = parts[0];
+		String currentNeighborhood = parts[1];
+		int currentNumType1 = Integer.parseInt(parts[3]);
+		int currentPriceType1 = Integer.parseInt(parts[4]);
+		int currentNumType2 = Integer.parseInt(parts[6]);
+		int currentPriceType2 = Integer.parseInt(parts[7]);
+		String currentOpeningDate = parts[8];
+		String currentClosingDate = parts[9];
+		int currentOfficerSlots = Integer.parseInt(parts[11]);
+		String currentOfficers = parts.length > 12 ? parts[12].replace("\"", "") : "";
+		int currentOfficerCount = currentOfficers.isEmpty() ? 0 : currentOfficers.split(",").length;
+
+		System.out.printf("Neighbourhood (%s, empty to keep): ", currentNeighborhood);
+		String newNeighborhood = scanner.nextLine().trim();
+		if (newNeighborhood.isEmpty()) newNeighborhood = currentNeighborhood;
+
+		currentNumType1 = getUpdatedValue(scanner, "Number of 2-room units", currentNumType1, true);
+
+		currentPriceType1 = getUpdatedValue(scanner, "Selling price of 2-room units", currentPriceType1, false);
+
+		currentNumType2 = getUpdatedValue(scanner, "Number of 3-room units", currentNumType2, true);
+
+		currentPriceType2 = getUpdatedValue(scanner, "Selling price of 3-room units", currentPriceType2, false);
+
+		LocalDate newOpeningDate = getDateInput(scanner, "Application opening date", currentOpeningDate);
+
+		LocalDate newClosingDate = getClosingDateInput(scanner, "Application closing date", currentClosingDate, newOpeningDate);
+
+		currentOfficerSlots = getOfficerSlotsInput(scanner, currentOfficerSlots, currentOfficerCount);
+
+		String updatedLine = String.format("%s,%s,2-Room,%d,%d,3-Room,%d,%d,%s,%s,%s,%d,\"%s\",%s",
+				projectName, newNeighborhood, currentNumType1, currentPriceType1, currentNumType2, currentPriceType2,
+				newOpeningDate, newClosingDate, parts[10], currentOfficerSlots, currentOfficers, parts[13]);
+
+		projectLines.set(selectedIndex + 1, updatedLine);
+
+		try (PrintWriter pw = new PrintWriter(new FileWriter("ProjectList.csv"))) {
+			projectLines.forEach(pw::println);
+			System.out.printf("Success! Welcome %s.%n", managerName);
+		} catch (IOException e) {
+			System.err.println("Error writing to ProjectList.csv");
+		}
+	}
+
+	private static int getUpdatedValue(Scanner scanner, String prompt, int currentValue, boolean allowZero) {
+		while (true) {
+			System.out.printf("%s (%d, empty to keep): ", prompt, currentValue);
+			String input = scanner.nextLine().trim();
+			if (input.isEmpty()) return currentValue;
+
+			try {
+				int value = Integer.parseInt(input);
+				if (allowZero && value < 0) {
+					System.out.println("Error! Number cannot be negative.");
+					continue;
+				}
+				if (!allowZero && value <= 0) {
+					System.out.println("Error! Value must be positive.");
+					continue;
+				}
+				return value;
+			} catch (NumberFormatException e) {
+				System.out.println("Error! Please enter a valid number.");
+			}
+		}
+	}
+
+	private static LocalDate getDateInput(Scanner scanner, String prompt, String currentDate) {
+		DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+		while (true) {
+			System.out.printf("%s (%s, empty to keep): ", prompt, currentDate);
+			String input = scanner.nextLine().trim();
+			if (input.isEmpty()) return LocalDate.parse(currentDate, formatter);
+
+			try {
+				return LocalDate.parse(input, formatter);
+			} catch (DateTimeParseException e) {
+				System.out.println("Error! Invalid date format. Use YYYY-MM-DD.");
+			}
+		}
+	}
+
+	private static LocalDate getClosingDateInput(Scanner scanner, String prompt, String currentDate, LocalDate openingDate) {
+		DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE;
+		while (true) {
+			System.out.printf("%s (%s, empty to keep): ", prompt, currentDate);
+			String input = scanner.nextLine().trim();
+			if (input.isEmpty()) return LocalDate.parse(currentDate, formatter);
+
+			try {
+				LocalDate date = LocalDate.parse(input, formatter);
+				if (date.isBefore(openingDate)) {
+					System.out.println("Error! Closing date can't be earlier than opening date!");
+					continue;
+				}
+				return date;
+			} catch (DateTimeParseException e) {
+				System.out.println("Error! Invalid date format. Use YYYY-MM-DD.");
+			}
+		}
+	}
+
+	private static int getOfficerSlotsInput(Scanner scanner, int currentSlots, int currentOfficers) {
+		while (true) {
+			System.out.printf("HDB Officer Slots (%d, empty to keep): ", currentSlots);
+			String input = scanner.nextLine().trim();
+			if (input.isEmpty()) return currentSlots;
+
+			try {
+				int slots = Integer.parseInt(input);
+				if (slots < currentOfficers) {
+					System.out.println("Error! Slots cannot be less than current officers assigned.");
+					continue;
+				}
+				if (slots < 0 || slots > 10) {
+					System.out.println("Error! Slots must be between 0 and 10.");
+					continue;
+				}
+				return slots;
+			} catch (NumberFormatException e) {
+				System.out.println("Error! Please enter a valid number.");
+			}
+		}
+}								
     public static void main(String[] args) {
 		ensureVisibilityColumnExists();
         allUsers.addAll(readUsersFromCSV("OfficerList.csv", "Officer"));
@@ -524,6 +691,7 @@ private static List<User> readUsersFromCSV(String filename, String role) {
 				if (currentUser.getRole().equals("Manager")) {
 					System.out.println("3) Create Project");
 					System.out.println("4) Toggle Visibility");
+					System.out.println("5) Edit Project");
 				} else if (currentUser.getRole().equals("Applicant") || currentUser.getRole().equals("Officer")) {
 					System.out.println("3) View Eligible Projects");
 				}
@@ -558,6 +726,13 @@ private static List<User> readUsersFromCSV(String filename, String role) {
 						} else {
 							System.out.println("Invalid choice.");
 						}
+						break;
+					case "5":
+						if (!currentUser.getRole().equals("Manager")) {
+							System.out.println("Invalid choice.");
+							break;
+						}
+						editProject(currentUser.getName(), scanner);
 						break;
 					default:
 						System.out.println("Invalid choice.");
