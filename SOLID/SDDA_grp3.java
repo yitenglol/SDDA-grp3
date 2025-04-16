@@ -81,10 +81,25 @@ class Project {
     private int officerSlots;
     private List<String> officers;
     private boolean visibility;
+    private List<String> officerPending;
+    private List<String> officerUnsuccessful;
+    private List<String> type1OwnerPending;
+    private List<String> type1OwnerUnsuccessful;
+    private List<String> type1OwnerSuccessful;
+    private List<String> type1OwnerBooked;
+    private List<String> type2OwnerPending;
+    private List<String> type2OwnerUnsuccessful;
+    private List<String> type2OwnerSuccessful;
+    private List<String> type2OwnerBooked;
 
     public Project(String projectName, String neighborhood, String type1, int numUnitsType1, int priceType1,
-                   String type2, int numUnitsType2, int priceType2, String openingDate, String closingDate,
-                   String managerName, int officerSlots, List<String> officers, boolean visibility) {
+                  String type2, int numUnitsType2, int priceType2, String openingDate, String closingDate,
+                  String managerName, int officerSlots, List<String> officers, boolean visibility,
+                  List<String> officerPending, List<String> officerUnsuccessful,
+                  List<String> type1OwnerPending, List<String> type1OwnerUnsuccessful,
+                  List<String> type1OwnerSuccessful, List<String> type1OwnerBooked,
+                  List<String> type2OwnerPending, List<String> type2OwnerUnsuccessful,
+                  List<String> type2OwnerSuccessful, List<String> type2OwnerBooked) {
         this.projectName = projectName;
         this.neighborhood = neighborhood;
         this.type1 = type1;
@@ -99,6 +114,16 @@ class Project {
         this.officerSlots = officerSlots;
         this.officers = officers != null ? new ArrayList<>(officers) : new ArrayList<>();
         this.visibility = visibility;
+        this.officerPending = officerPending != null ? new ArrayList<>(officerPending) : new ArrayList<>();
+        this.officerUnsuccessful = officerUnsuccessful != null ? new ArrayList<>(officerUnsuccessful) : new ArrayList<>();
+        this.type1OwnerPending = type1OwnerPending != null ? new ArrayList<>(type1OwnerPending) : new ArrayList<>();
+        this.type1OwnerUnsuccessful = type1OwnerUnsuccessful != null ? new ArrayList<>(type1OwnerUnsuccessful) : new ArrayList<>();
+        this.type1OwnerSuccessful = type1OwnerSuccessful != null ? new ArrayList<>(type1OwnerSuccessful) : new ArrayList<>();
+        this.type1OwnerBooked = type1OwnerBooked != null ? new ArrayList<>(type1OwnerBooked) : new ArrayList<>();
+        this.type2OwnerPending = type2OwnerPending != null ? new ArrayList<>(type2OwnerPending) : new ArrayList<>();
+        this.type2OwnerUnsuccessful = type2OwnerUnsuccessful != null ? new ArrayList<>(type2OwnerUnsuccessful) : new ArrayList<>();
+        this.type2OwnerSuccessful = type2OwnerSuccessful != null ? new ArrayList<>(type2OwnerSuccessful) : new ArrayList<>();
+        this.type2OwnerBooked = type2OwnerBooked != null ? new ArrayList<>(type2OwnerBooked) : new ArrayList<>();
     }
 
     public String getProjectName() { return projectName; }
@@ -116,6 +141,16 @@ class Project {
     public List<String> getOfficers() { return new ArrayList<>(officers); }
     public boolean getVisibility() { return visibility; }
     public void setVisibility(boolean visibility) { this.visibility = visibility; }
+    public List<String> getOfficerPending() { return new ArrayList<>(officerPending); }
+    public List<String> getOfficerUnsuccessful() { return new ArrayList<>(officerUnsuccessful); }
+    public List<String> getType1OwnerPending() { return new ArrayList<>(type1OwnerPending); }
+    public List<String> getType1OwnerUnsuccessful() { return new ArrayList<>(type1OwnerUnsuccessful); }
+    public List<String> getType1OwnerSuccessful() { return new ArrayList<>(type1OwnerSuccessful); }
+    public List<String> getType1OwnerBooked() { return new ArrayList<>(type1OwnerBooked); }
+    public List<String> getType2OwnerPending() { return new ArrayList<>(type2OwnerPending); }
+    public List<String> getType2OwnerUnsuccessful() { return new ArrayList<>(type2OwnerUnsuccessful); }
+    public List<String> getType2OwnerSuccessful() { return new ArrayList<>(type2OwnerSuccessful); }
+    public List<String> getType2OwnerBooked() { return new ArrayList<>(type2OwnerBooked); }
 
     public void setNeighborhood(String neighborhood) { this.neighborhood = neighborhood; }
     public void setNumUnitsType1(int numUnitsType1) { this.numUnitsType1 = numUnitsType1; }
@@ -187,17 +222,11 @@ class FileHandler {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             boolean firstLine = true;
-            boolean hasVisibilityColumn = false;
+            int expectedColumns = 24; // Number of columns after adding new fields
             while ((line = br.readLine()) != null) {
                 if (firstLine) {
                     firstLine = false;
-                    String[] headers = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
-                    List<String> headerFields = new ArrayList<>();
-                    for (String header : headers) {
-                        headerFields.add(header.trim());
-                    }
-                    hasVisibilityColumn = headerFields.size() > 13 && headerFields.get(13).equalsIgnoreCase("Visibility");
-                    continue;
+                    continue; // Skip header processing for column presence checks (handled dynamically)
                 }
                 String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
                 List<String> fields = new ArrayList<>();
@@ -208,9 +237,10 @@ class FileHandler {
                     }
                     fields.add(field);
                 }
-                if (fields.size() < 13) {
+                if (fields.size() < 14) {
                     continue;
                 }
+
                 String projectName = fields.get(0);
                 String neighborhood = fields.get(1);
                 String type1 = fields.get(2);
@@ -224,19 +254,25 @@ class FileHandler {
                 String managerName = fields.get(10);
                 int officerSlots = Integer.parseInt(fields.get(11));
                 String officersStr = fields.get(12);
-                List<String> officers = new ArrayList<>();
-                if (!officersStr.isEmpty()) {
-                    String[] officerArray = officersStr.split(",");
-                    for (String officer : officerArray) {
-                        officers.add(officer.trim());
-                    }
-                }
+                List<String> officers = parseCommaSeparatedList(fields, 12);
+
                 boolean visibility = false;
-                if (hasVisibilityColumn && fields.size() > 13) {
-                    String visibilityStr = fields.get(13);
-                    visibility = Boolean.parseBoolean(visibilityStr);
+                if (fields.size() > 13) {
+                    visibility = Boolean.parseBoolean(fields.get(13));
                 }
-                Project project = new Project(projectName, neighborhood, type1, numUnitsType1, priceType1, type2, numUnitsType2, priceType2, openingDate, closingDate, managerName, officerSlots, officers, visibility);
+
+                List<String> officerPending = parseCommaSeparatedList(fields, 14);
+                List<String> officerUnsuccessful = parseCommaSeparatedList(fields, 15);
+                List<String> type1OwnerPending = parseCommaSeparatedList(fields, 16);
+                List<String> type1OwnerUnsuccessful = parseCommaSeparatedList(fields, 17);
+                List<String> type1OwnerSuccessful = parseCommaSeparatedList(fields, 18);
+                List<String> type1OwnerBooked = parseCommaSeparatedList(fields, 19);
+                List<String> type2OwnerPending = parseCommaSeparatedList(fields, 20);
+                List<String> type2OwnerUnsuccessful = parseCommaSeparatedList(fields, 21);
+                List<String> type2OwnerSuccessful = parseCommaSeparatedList(fields, 22);
+                List<String> type2OwnerBooked = parseCommaSeparatedList(fields, 23);
+
+                Project project = new Project(projectName, neighborhood, type1, numUnitsType1, priceType1, type2, numUnitsType2, priceType2, openingDate, closingDate, managerName, officerSlots, officers, visibility, officerPending, officerUnsuccessful, type1OwnerPending, type1OwnerUnsuccessful, type1OwnerSuccessful, type1OwnerBooked, type2OwnerPending, type2OwnerUnsuccessful, type2OwnerSuccessful, type2OwnerBooked);
                 projects.add(project);
             }
         } catch (IOException | NumberFormatException e) {
@@ -245,15 +281,37 @@ class FileHandler {
         return projects;
     }
 
+    private static List<String> parseCommaSeparatedList(List<String> fields, int index) {
+        List<String> list = new ArrayList<>();
+        if (index < fields.size()) {
+            String value = fields.get(index);
+            if (!value.isEmpty()) {
+                String[] parts = value.split(",");
+                for (String part : parts) {
+                    list.add(part.trim());
+                }
+            }
+        }
+        return list;
+    }
+
     public static boolean writeProjectsToCSV(String filename, List<Project> projects) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
-            pw.println("Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility");
+            pw.println("Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility,OfficerPending,OfficerUnsuccessful,Type1OwnerPending,Type1OwnerUnsuccessful,Type1OwnerSuccessful,Type1OwnerBooked,Type2OwnerPending,Type2OwnerUnsuccessful,Type2OwnerSuccessful,Type2OwnerBooked");
             for (Project project : projects) {
-                String officersStr = String.join(",", project.getOfficers());
-                if (officersStr.contains(",")) {
-                    officersStr = "\"" + officersStr + "\"";
-                }
-                pw.printf("%s,%s,%s,%d,%d,%s,%d,%d,%s,%s,%s,%d,%s,%b%n",
+                String officersStr = getCSVString(project.getOfficers());
+                String officerPendingStr = getCSVString(project.getOfficerPending());
+                String officerUnsuccessfulStr = getCSVString(project.getOfficerUnsuccessful());
+                String type1OwnerPendingStr = getCSVString(project.getType1OwnerPending());
+                String type1OwnerUnsuccessfulStr = getCSVString(project.getType1OwnerUnsuccessful());
+                String type1OwnerSuccessfulStr = getCSVString(project.getType1OwnerSuccessful());
+                String type1OwnerBookedStr = getCSVString(project.getType1OwnerBooked());
+                String type2OwnerPendingStr = getCSVString(project.getType2OwnerPending());
+                String type2OwnerUnsuccessfulStr = getCSVString(project.getType2OwnerUnsuccessful());
+                String type2OwnerSuccessfulStr = getCSVString(project.getType2OwnerSuccessful());
+                String type2OwnerBookedStr = getCSVString(project.getType2OwnerBooked());
+
+                pw.printf("%s,%s,%s,%d,%d,%s,%d,%d,%s,%s,%s,%d,%s,%b,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s%n",
                         project.getProjectName(),
                         project.getNeighborhood(),
                         project.getType1(),
@@ -267,13 +325,31 @@ class FileHandler {
                         project.getManagerName(),
                         project.getOfficerSlots(),
                         officersStr,
-                        project.getVisibility());
+                        project.getVisibility(),
+                        officerPendingStr,
+                        officerUnsuccessfulStr,
+                        type1OwnerPendingStr,
+                        type1OwnerUnsuccessfulStr,
+                        type1OwnerSuccessfulStr,
+                        type1OwnerBookedStr,
+                        type2OwnerPendingStr,
+                        type2OwnerUnsuccessfulStr,
+                        type2OwnerSuccessfulStr,
+                        type2OwnerBookedStr);
             }
             return true;
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private static String getCSVString(List<String> list) {
+        String str = String.join(",", list);
+        if (str.contains(",")) {
+            str = "\"" + str + "\"";
+        }
+        return str;
     }
 }
 
@@ -448,7 +524,7 @@ public class SDDA_grp3 {
             }
         } while (officerSlots < 0 || officerSlots > 10);
 
-        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, new ArrayList<>(), false);
+        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, new ArrayList<>(), false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         projects.add(newProject);
 
         boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
