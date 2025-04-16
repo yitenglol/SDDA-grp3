@@ -2,6 +2,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 abstract class User {
     private String name;
@@ -303,6 +304,56 @@ class PasswordChanger {
 }
 
 public class SDDA_grp3 {
+    private static boolean isEligibleForRoomType(User user, String roomType) {
+        String maritalStatus = user.getMaritalStatus().toLowerCase();
+        int age = user.getAge();
+        String rt = roomType.toLowerCase();
+
+        if (rt.equals("2-room")) {
+            return (maritalStatus.equals("single") && age >= 35) || (maritalStatus.equals("married") && age >= 21);
+        } else if (rt.equals("3-room")) {
+            return maritalStatus.equals("married") && age >= 21;
+        }
+        return false;
+    }
+
+    private static void viewEligibleProjects(User user, Scanner scanner) {
+        List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+        List<Project> visibleProjects = projects.stream()
+                .filter(Project::getVisibility)
+                .collect(Collectors.toList());
+
+        List<String> eligibleEntries = new ArrayList<>();
+        for (Project project : visibleProjects) {
+            String type1 = project.getType1();
+            if (isEligibleForRoomType(user, type1)) {
+                eligibleEntries.add(String.format("%s\t\t%s\t\t%d", project.getProjectName(), type1, project.getPriceType1()));
+            }
+            String type2 = project.getType2();
+            if (isEligibleForRoomType(user, type2)) {
+                eligibleEntries.add(String.format("%s\t\t%s\t\t%d", project.getProjectName(), type2, project.getPriceType2()));
+            }
+        }
+
+        if (eligibleEntries.isEmpty()) {
+            System.out.printf("No Eligible Projects Welcome %s, %d, %s %s.%n",
+                    user.getName(),
+                    user.getAge(),
+                    user.getMaritalStatus(),
+                    user instanceof Officer ? "Officer" : "Applicant");
+        } else {
+            System.out.println("=============================================================");
+            System.out.println("Project Name\t\tType\t\tPrice");
+            eligibleEntries.forEach(System.out::println);
+            System.out.println("=============================================================");
+            System.out.printf("Welcome %s, %d, %s %s.%n",
+                    user.getName(),
+                    user.getAge(),
+                    user.getMaritalStatus(),
+                    user instanceof Officer ? "Officer" : "Applicant");
+        }
+    }
+
     private static void createProject(Manager manager, Scanner scanner) {
         List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
         String projectName;
@@ -474,6 +525,8 @@ public class SDDA_grp3 {
                 if (user instanceof Manager) {
                     System.out.println("3) Create Project");
                     System.out.println("4) Toggle Visibility");
+                } else {
+                    System.out.println("3) View Eligible Projects");
                 }
                 System.out.print("Choice: ");
                 String choice = scanner.nextLine().trim();
@@ -497,7 +550,7 @@ public class SDDA_grp3 {
                         if (user instanceof Manager) {
                             createProject((Manager) user, scanner);
                         } else {
-                            System.out.println("Invalid choice.");
+                            viewEligibleProjects(user, scanner);
                         }
                         break;
                     case "4":
