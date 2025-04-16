@@ -10,13 +10,15 @@ abstract class User {
     private int age;
     private String maritalStatus;
     private String password;
+    private String filter;
 
-    public User(String name, String nric, int age, String maritalStatus, String password) {
+    public User(String name, String nric, int age, String maritalStatus, String password, String filter) {
         this.name = name;
         this.nric = nric;
         this.age = age;
         this.maritalStatus = maritalStatus;
         this.password = password;
+        this.filter = filter;
     }
 
     public abstract String getCSVFilename();
@@ -26,12 +28,14 @@ abstract class User {
     public int getAge() { return age; }
     public String getMaritalStatus() { return maritalStatus; }
     public String getPassword() { return password; }
+    public String getFilter() { return filter; }
     public void setPassword(String password) { this.password = password; }
+    public void setFilter(String filter) { this.filter = filter; }
 }
 
 class Applicant extends User {
-    public Applicant(String name, String nric, int age, String maritalStatus, String password) {
-        super(name, nric, age, maritalStatus, password);
+    public Applicant(String name, String nric, int age, String maritalStatus, String password, String filter) {
+        super(name, nric, age, maritalStatus, password, filter);
     }
 
     @Override
@@ -41,8 +45,8 @@ class Applicant extends User {
 }
 
 class Officer extends User {
-    public Officer(String name, String nric, int age, String maritalStatus, String password) {
-        super(name, nric, age, maritalStatus, password);
+    public Officer(String name, String nric, int age, String maritalStatus, String password, String filter) {
+        super(name, nric, age, maritalStatus, password, filter);
     }
 
     @Override
@@ -52,8 +56,8 @@ class Officer extends User {
 }
 
 class Manager extends User {
-    public Manager(String name, String nric, int age, String maritalStatus, String password) {
-        super(name, nric, age, maritalStatus, password);
+    public Manager(String name, String nric, int age, String maritalStatus, String password, String filter) {
+        super(name, nric, age, maritalStatus, password, filter);
     }
 
     @Override
@@ -112,6 +116,15 @@ class Project {
     public List<String> getOfficers() { return new ArrayList<>(officers); }
     public boolean getVisibility() { return visibility; }
     public void setVisibility(boolean visibility) { this.visibility = visibility; }
+
+    public void setNeighborhood(String neighborhood) { this.neighborhood = neighborhood; }
+    public void setNumUnitsType1(int numUnitsType1) { this.numUnitsType1 = numUnitsType1; }
+    public void setPriceType1(int priceType1) { this.priceType1 = priceType1; }
+    public void setNumUnitsType2(int numUnitsType2) { this.numUnitsType2 = numUnitsType2; }
+    public void setPriceType2(int priceType2) { this.priceType2 = priceType2; }
+    public void setOpeningDate(String openingDate) { this.openingDate = openingDate; }
+    public void setClosingDate(String closingDate) { this.closingDate = closingDate; }
+    public void setOfficerSlots(int officerSlots) { this.officerSlots = officerSlots; }
 }
 
 class FileHandler {
@@ -132,8 +145,12 @@ class FileHandler {
                 int age = Integer.parseInt(parts[2].trim());
                 String maritalStatus = parts[3].trim();
                 String password = parts[4].trim();
-                T user = userClass.getDeclaredConstructor(String.class, String.class, int.class, String.class, String.class)
-                        .newInstance(name, nric, age, maritalStatus, password);
+                String filter = "None";
+                if (parts.length >= 6) {
+                    filter = parts[5].trim();
+                }
+                T user = userClass.getDeclaredConstructor(String.class, String.class, int.class, String.class, String.class, String.class)
+                        .newInstance(name, nric, age, maritalStatus, password, filter);
                 users.add(user);
             }
         } catch (IOException | ReflectiveOperationException e) {
@@ -144,14 +161,15 @@ class FileHandler {
 
     public static boolean writeUsersToCSV(String filename, List<? extends User> users) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
-            pw.println("Name,NRIC,Age,Marital Status,Password");
+            pw.println("Name,NRIC,Age,Marital Status,Password,Filter");
             for (User user : users) {
-                pw.printf("%s,%s,%d,%s,%s%n",
+                pw.printf("%s,%s,%d,%s,%s,%s%n",
                         user.getName(),
                         user.getNric(),
                         user.getAge(),
                         user.getMaritalStatus(),
-                        user.getPassword());
+                        user.getPassword(),
+                        user.getFilter());
             }
             return true;
         } catch (IOException e) {
@@ -489,6 +507,191 @@ public class SDDA_grp3 {
         }
     }
 
+    private static void editProject(Manager manager, Scanner scanner) {
+        List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+        if (projects.isEmpty()) {
+            System.out.println("No projects to edit.");
+            return;
+        }
+
+        System.out.println("=============================================================");
+        System.out.println("Index\tProject Name\t\tVisibility");
+        int index = 1;
+        for (Project p : projects) {
+            System.out.printf("%d\t\t%s\t\t%s%n", index, p.getProjectName(), p.getVisibility() ? "True" : "False");
+            index++;
+        }
+        System.out.println("=============================================================");
+
+        System.out.print("Enter number to edit: ");
+        String input = scanner.nextLine().trim();
+        try {
+            int selectedIndex = Integer.parseInt(input);
+            if (selectedIndex < 1 || selectedIndex > projects.size()) {
+                System.out.println("Invalid index.");
+                return;
+            }
+            Project project = projects.get(selectedIndex - 1);
+
+            System.out.print("Neighbourhood (" + project.getNeighborhood() + ", empty to keep): ");
+            String neighborhoodInput = scanner.nextLine().trim();
+            if (!neighborhoodInput.isEmpty()) {
+                project.setNeighborhood(neighborhoodInput);
+            }
+
+            int numUnitsType1 = project.getNumUnitsType1();
+            boolean validUnitsType1 = false;
+            do {
+                System.out.print("Number of 2-room units (" + numUnitsType1 + ", empty to keep): ");
+                String unitsInput = scanner.nextLine().trim();
+                if (unitsInput.isEmpty()) {
+                    validUnitsType1 = true;
+                    break;
+                }
+                try {
+                    int newUnits = Integer.parseInt(unitsInput);
+                    if (newUnits < 0) {
+                        System.out.println("Error! Number of units cannot be negative");
+                        continue;
+                    }
+                    project.setNumUnitsType1(newUnits);
+                    validUnitsType1 = true;
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Please enter a valid number.");
+                }
+            } while (!validUnitsType1);
+
+            int priceType1 = project.getPriceType1();
+            boolean validPriceType1 = false;
+            do {
+                System.out.print("Selling price of 2-room units (" + priceType1 + ", empty to keep): ");
+                String priceInput = scanner.nextLine().trim();
+                if (priceInput.isEmpty()) {
+                    validPriceType1 = true;
+                    break;
+                }
+                try {
+                    int newPrice = Integer.parseInt(priceInput);
+                    if (newPrice <= 0) {
+                        System.out.println("Error! Selling price must be positive");
+                        continue;
+                    }
+                    project.setPriceType1(newPrice);
+                    validPriceType1 = true;
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Please enter a valid number.");
+                }
+            } while (!validPriceType1);
+
+            int numUnitsType2 = project.getNumUnitsType2();
+            boolean validUnitsType2 = false;
+            do {
+                System.out.print("Number of 3-room units (" + numUnitsType2 + ", empty to keep): ");
+                String unitsInput = scanner.nextLine().trim();
+                if (unitsInput.isEmpty()) {
+                    validUnitsType2 = true;
+                    break;
+                }
+                try {
+                    int newUnits = Integer.parseInt(unitsInput);
+                    if (newUnits < 0) {
+                        System.out.println("Error! Number of units cannot be negative");
+                        continue;
+                    }
+                    project.setNumUnitsType2(newUnits);
+                    validUnitsType2 = true;
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Please enter a valid number.");
+                }
+            } while (!validUnitsType2);
+
+            int priceType2 = project.getPriceType2();
+            boolean validPriceType2 = false;
+            do {
+                System.out.print("Selling price of 3-room units (" + priceType2 + ", empty to keep): ");
+                String priceInput = scanner.nextLine().trim();
+                if (priceInput.isEmpty()) {
+                    validPriceType2 = true;
+                    break;
+                }
+                try {
+                    int newPrice = Integer.parseInt(priceInput);
+                    if (newPrice <= 0) {
+                        System.out.println("Error! Selling price must be positive");
+                        continue;
+                    }
+                    project.setPriceType2(newPrice);
+                    validPriceType2 = true;
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Please enter a valid number.");
+                }
+            } while (!validPriceType2);
+
+            String newOpeningDate = project.getOpeningDate();
+            System.out.print("Application opening date (" + newOpeningDate + ", empty to keep): ");
+            String openingInput = scanner.nextLine().trim();
+            if (!openingInput.isEmpty()) {
+                newOpeningDate = openingInput;
+            }
+
+            String newClosingDate = project.getClosingDate();
+            boolean validDates = false;
+            do {
+                System.out.print("Application closing date (" + newClosingDate + ", empty to keep): ");
+                String closingInput = scanner.nextLine().trim();
+                if (!closingInput.isEmpty()) {
+                    newClosingDate = closingInput;
+                }
+
+                if (newClosingDate.compareTo(newOpeningDate) < 0) {
+                    System.out.println("Error! Closing date can't be earlier than opening date!");
+                } else {
+                    validDates = true;
+                }
+            } while (!validDates);
+
+            project.setOpeningDate(newOpeningDate);
+            project.setClosingDate(newClosingDate);
+
+            int officerSlots = project.getOfficerSlots();
+            int currentOfficersCount = project.getOfficers().size();
+            boolean validSlots = false;
+            do {
+                System.out.print("HDB Officer Slots (" + officerSlots + ", empty to keep): ");
+                String slotsInput = scanner.nextLine().trim();
+                if (slotsInput.isEmpty()) {
+                    validSlots = true;
+                    break;
+                }
+                try {
+                    int newSlots = Integer.parseInt(slotsInput);
+                    if (newSlots < 0 || newSlots > 10) {
+                        System.out.println("Error! Officer slots cannot be negative or more than 10");
+                        continue;
+                    }
+                    if (newSlots < currentOfficersCount) {
+                        System.out.println("Error! Officer slots is less than current amount of officers");
+                        continue;
+                    }
+                    project.setOfficerSlots(newSlots);
+                    validSlots = true;
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input. Please enter a valid number.");
+                }
+            } while (!validSlots);
+
+            boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
+            if (success) {
+                System.out.println("Success! Welcome " + manager.getName() + ", " + manager.getAge() + ", " + manager.getMaritalStatus() + " Manager.");
+            } else {
+                System.out.println("Error saving project changes.");
+            }
+
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input. Please enter a number.");
+        }
+    }
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         while (true) {
@@ -525,6 +728,7 @@ public class SDDA_grp3 {
                 if (user instanceof Manager) {
                     System.out.println("3) Create Project");
                     System.out.println("4) Toggle Visibility");
+                    System.out.println("5) Edit Project");
                 } else {
                     System.out.println("3) View Eligible Projects");
                 }
@@ -556,6 +760,13 @@ public class SDDA_grp3 {
                     case "4":
                         if (user instanceof Manager) {
                             toggleVisibility((Manager) user, scanner);
+                        } else {
+                            System.out.println("Invalid choice.");
+                        }
+                        break;
+                    case "5":
+                        if (user instanceof Manager) {
+                            editProject((Manager) user, scanner);
                         } else {
                             System.out.println("Invalid choice.");
                         }
