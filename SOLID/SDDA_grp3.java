@@ -769,6 +769,14 @@ public class SDDA_grp3 {
     }
 
     public static void main(String[] args) {
+		File enquiryFile = new File("EnquiryList.csv");
+        if (!enquiryFile.exists()) {
+            try (PrintWriter pw = new PrintWriter(enquiryFile)) {
+                pw.println("Name,Project,String,Reply");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         Scanner scanner = new Scanner(System.in);
         while (true) {
             System.out.println("Welcome to SDDA-grp3 system.");
