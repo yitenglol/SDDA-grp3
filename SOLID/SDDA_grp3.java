@@ -160,6 +160,46 @@ class Project {
     public void setOpeningDate(String openingDate) { this.openingDate = openingDate; }
     public void setClosingDate(String closingDate) { this.closingDate = closingDate; }
     public void setOfficerSlots(int officerSlots) { this.officerSlots = officerSlots; }
+	
+	public void setOfficerPending(List<String> officerPending) {
+        this.officerPending = new ArrayList<>(officerPending);
+    }
+
+    public void setOfficerUnsuccessful(List<String> officerUnsuccessful) {
+        this.officerUnsuccessful = new ArrayList<>(officerUnsuccessful);
+    }
+
+    public void setType1OwnerPending(List<String> type1OwnerPending) {
+        this.type1OwnerPending = new ArrayList<>(type1OwnerPending);
+    }
+
+    public void setType1OwnerUnsuccessful(List<String> type1OwnerUnsuccessful) {
+        this.type1OwnerUnsuccessful = new ArrayList<>(type1OwnerUnsuccessful);
+    }
+
+    public void setType1OwnerSuccessful(List<String> type1OwnerSuccessful) {
+        this.type1OwnerSuccessful = new ArrayList<>(type1OwnerSuccessful);
+    }
+
+    public void setType1OwnerBooked(List<String> type1OwnerBooked) {
+        this.type1OwnerBooked = new ArrayList<>(type1OwnerBooked);
+    }
+
+    public void setType2OwnerPending(List<String> type2OwnerPending) {
+        this.type2OwnerPending = new ArrayList<>(type2OwnerPending);
+    }
+
+    public void setType2OwnerUnsuccessful(List<String> type2OwnerUnsuccessful) {
+        this.type2OwnerUnsuccessful = new ArrayList<>(type2OwnerUnsuccessful);
+    }
+
+    public void setType2OwnerSuccessful(List<String> type2OwnerSuccessful) {
+        this.type2OwnerSuccessful = new ArrayList<>(type2OwnerSuccessful);
+    }
+
+    public void setType2OwnerBooked(List<String> type2OwnerBooked) {
+        this.type2OwnerBooked = new ArrayList<>(type2OwnerBooked);
+    }
 }
 
 class FileHandler {
@@ -398,6 +438,18 @@ class PasswordChanger {
 }
 
 public class SDDA_grp3 {
+	private static class EligibleEntry {
+        Project project;
+        String typeDesignation;
+        String displayString;
+
+        EligibleEntry(Project project, String typeDesignation, String displayString) {
+            this.project = project;
+            this.typeDesignation = typeDesignation;
+            this.displayString = displayString;
+        }
+    }
+	
     private static boolean isEligibleForRoomType(User user, String roomType) {
         String maritalStatus = user.getMaritalStatus().toLowerCase();
         int age = user.getAge();
@@ -410,8 +462,60 @@ public class SDDA_grp3 {
         }
         return false;
     }
+	
+    private static boolean isUserInOfficerOrPending(User user, List<Project> projects) {
+        for (Project project : projects) {
+            if (project.getOfficers().contains(user.getName()) || project.getOfficerPending().contains(user.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
 
-    private static void viewEligibleProjects(User user, Scanner scanner) {
+    private static boolean isUserInApplicationLists(User user, List<Project> projects) {
+        for (Project project : projects) {
+            List<String> type1Lists = new ArrayList<>();
+            type1Lists.addAll(project.getType1OwnerPending());
+            type1Lists.addAll(project.getType1OwnerSuccessful());
+            type1Lists.addAll(project.getType1OwnerBooked());
+            List<String> type2Lists = new ArrayList<>();
+            type2Lists.addAll(project.getType2OwnerPending());
+            type2Lists.addAll(project.getType2OwnerSuccessful());
+            type2Lists.addAll(project.getType2OwnerBooked());
+            if (type1Lists.contains(user.getName()) || type2Lists.contains(user.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String findPendingApplicationMessage(User user, List<Project> projects) {
+        for (Project project : projects) {
+            if (project.getType1OwnerPending().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are PENDING for %s type %s", project.getProjectName(), project.getType1());
+            }
+            if (project.getType1OwnerSuccessful().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are SUCCESSFUL for %s type %s", project.getProjectName(), project.getType1());
+            }
+            if (project.getType1OwnerBooked().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are BOOKED for %s type %s", project.getProjectName(), project.getType1());
+            }
+            if (project.getType2OwnerPending().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are PENDING for %s type %s", project.getProjectName(), project.getType2());
+            }
+            if (project.getType2OwnerSuccessful().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are SUCCESSFUL for %s type %s", project.getProjectName(), project.getType2());
+            }
+            if (project.getType2OwnerBooked().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are BOOKED for %s type %s", project.getProjectName(), project.getType2());
+            }
+        }
+        return "You cannot apply for any projects due to an existing application.";
+    }
+
+    
+	private static void viewEligibleProjects(User user, Scanner scanner) {
         List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
         List<Project> visibleProjects = projects.stream()
                 .filter(Project::getVisibility)
