@@ -515,40 +515,92 @@ public class SDDA_grp3 {
     }
 
     
-	private static void viewEligibleProjects(User user, Scanner scanner) {
+    private static void viewEligibleProjects(User user, Scanner scanner) {
         List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
-        List<Project> visibleProjects = projects.stream()
-                .filter(Project::getVisibility)
-                .collect(Collectors.toList());
+        List<Project> visibleProjects = projects.stream().filter(Project::getVisibility).collect(Collectors.toList());
+        List<EligibleEntry> eligibleEntries = new ArrayList<>();
 
-        List<String> eligibleEntries = new ArrayList<>();
         for (Project project : visibleProjects) {
             String type1 = project.getType1();
             if (isEligibleForRoomType(user, type1)) {
-                eligibleEntries.add(String.format("%s\t\t%s\t\t%d", project.getProjectName(), type1, project.getPriceType1()));
+                String displayStr = String.format("%s\t\t%s\t\t%d", project.getProjectName(), type1, project.getPriceType1());
+                eligibleEntries.add(new EligibleEntry(project, "Type1", displayStr));
             }
             String type2 = project.getType2();
             if (isEligibleForRoomType(user, type2)) {
-                eligibleEntries.add(String.format("%s\t\t%s\t\t%d", project.getProjectName(), type2, project.getPriceType2()));
+                String displayStr = String.format("%s\t\t%s\t\t%d", project.getProjectName(), type2, project.getPriceType2());
+                eligibleEntries.add(new EligibleEntry(project, "Type2", displayStr));
+            }
+        }
+
+        boolean canApply = true;
+        String pendingMessage = null;
+
+        if (user instanceof Officer) {
+            if (isUserInOfficerOrPending(user, projects)) {
+                canApply = false;
+                pendingMessage = "You cannot apply because you are assigned as an officer in a project.";
+            }
+        }
+
+        if (canApply) {
+            if (isUserInApplicationLists(user, projects)) {
+                canApply = false;
+                pendingMessage = findPendingApplicationMessage(user, projects);
             }
         }
 
         if (eligibleEntries.isEmpty()) {
             System.out.printf("No Eligible Projects Welcome %s, %d, %s %s.%n",
-                    user.getName(),
-                    user.getAge(),
-                    user.getMaritalStatus(),
+                    user.getName(), user.getAge(), user.getMaritalStatus(),
                     user instanceof Officer ? "Officer" : "Applicant");
         } else {
             System.out.println("=============================================================");
             System.out.println("Project Name\t\tType\t\tPrice");
-            eligibleEntries.forEach(System.out::println);
+            for (EligibleEntry entry : eligibleEntries) {
+                System.out.println(entry.displayString);
+            }
             System.out.println("=============================================================");
-            System.out.printf("Welcome %s, %d, %s %s.%n",
-                    user.getName(),
-                    user.getAge(),
-                    user.getMaritalStatus(),
-                    user instanceof Officer ? "Officer" : "Applicant");
+            if (!canApply) {
+                System.out.println(pendingMessage);
+            } else {
+                System.out.print("Would you like to apply for a project? (enter index number or c to cancel): ");
+                String input = scanner.nextLine().trim();
+                if (input.equalsIgnoreCase("c")) {
+                    return;
+                }
+                try {
+                    int selectedIndex = Integer.parseInt(input);
+                    if (selectedIndex < 1 || selectedIndex > eligibleEntries.size()) {
+                        System.out.println("Invalid index.");
+                        return;
+                    }
+                    EligibleEntry selectedEntry = eligibleEntries.get(selectedIndex - 1);
+                    Project selectedProject = selectedEntry.project;
+                    String typeDesignation = selectedEntry.typeDesignation;
+
+                    if (typeDesignation.equals("Type1")) {
+                        List<String> newPending = new ArrayList<>(selectedProject.getType1OwnerPending());
+                        newPending.add(user.getName());
+                        selectedProject.setType1OwnerPending(newPending);
+                    } else {
+                        List<String> newPending = new ArrayList<>(selectedProject.getType2OwnerPending());
+                        newPending.add(user.getName());
+                        selectedProject.setType2OwnerPending(newPending);
+                    }
+
+                    boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
+                    if (success) {
+                        System.out.printf("Success Project Applied! Welcome %s, %d, %s %s.%n",
+                                user.getName(), user.getAge(), user.getMaritalStatus(),
+                                user instanceof Officer ? "Officer" : "Applicant");
+                    } else {
+                        System.out.println("Error applying to project.");
+                    }
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid input.");
+                }
+            }
         }
     }
 
