@@ -450,6 +450,104 @@ public class SDDA_grp3 {
         }
     }
 	
+	private static class PendingEntry {
+        Project project;
+        String type;
+        String ownerName;
+
+        PendingEntry(Project project, String type, String ownerName) {
+            this.project = project;
+            this.type = type;
+            this.ownerName = ownerName;
+        }
+    }
+	
+	    private static void approveOwners(Manager manager, Scanner scanner) {
+        List<Project> allProjects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+        List<Project> managedProjects = allProjects.stream()
+                .filter(p -> p.getManagerName().equalsIgnoreCase(manager.getName()))
+                .collect(Collectors.toList());
+
+        List<PendingEntry> pendingEntries = new ArrayList<>();
+        for (Project project : managedProjects) {
+            project.getType1OwnerPending().forEach(owner -> 
+                pendingEntries.add(new PendingEntry(project, "Type1", owner)));
+            project.getType2OwnerPending().forEach(owner -> 
+                pendingEntries.add(new PendingEntry(project, "Type2", owner)));
+        }
+
+        if (pendingEntries.isEmpty()) {
+            System.out.println("No pending applications to approve.");
+            return;
+        }
+
+        System.out.println("=============================================================");
+        System.out.println("Pending Applications");
+        System.out.println("Index\tProject Name\t\tType\tOwner");
+        int index = 1;
+        for (PendingEntry entry : pendingEntries) {
+            String type = entry.type.equals("Type1") ? entry.project.getType1() : entry.project.getType2();
+            System.out.printf("%d\t\t%s\t\t%s\t\t%s%n", index++, entry.project.getProjectName(), type, entry.ownerName);
+        }
+        System.out.println("=============================================================");
+
+        while (true) {
+            System.out.print("Enter number to approve (q to exit): ");
+            String input = scanner.nextLine().trim();
+            if (input.equalsIgnoreCase("q")) break;
+
+            try {
+                int selectedIndex = Integer.parseInt(input) - 1;
+                if (selectedIndex < 0 || selectedIndex >= pendingEntries.size()) {
+                    System.out.println("Invalid index.");
+                    continue;
+                }
+
+                PendingEntry entry = pendingEntries.get(selectedIndex);
+                Project project = entry.project;
+                String owner = entry.ownerName;
+
+                if (entry.type.equals("Type1")) {
+                    project.getType1OwnerPending().remove(owner);
+                    project.getType1OwnerSuccessful().add(owner);
+                } else {
+                    project.getType2OwnerPending().remove(owner);
+                    project.getType2OwnerSuccessful().add(owner);
+                }
+
+                if (FileHandler.writeProjectsToCSV("ProjectList.csv", allProjects)) {
+                    System.out.printf("Success! %s approved for %s type %s.%n", owner, 
+                            project.getProjectName(), entry.type.equals("Type1") ? project.getType1() : project.getType2());
+                    
+                    pendingEntries.clear();
+                    managedProjects.forEach(p -> {
+                        p.getType1OwnerPending().forEach(o -> pendingEntries.add(new PendingEntry(p, "Type1", o)));
+                        p.getType2OwnerPending().forEach(o -> pendingEntries.add(new PendingEntry(p, "Type2", o)));
+                    });
+
+                    if (pendingEntries.isEmpty()) {
+                        System.out.println("No more pending applications.");
+                        break;
+                    }
+
+                    System.out.println("=============================================================");
+                    System.out.println("Pending Applications");
+                    System.out.println("Index\tProject Name\t\tType\tOwner");
+                    index = 1;
+                    for (PendingEntry e : pendingEntries) {
+                        String type = e.type.equals("Type1") ? e.project.getType1() : e.project.getType2();
+                        System.out.printf("%d\t\t%s\t\t%s\t\t%s%n", index++, e.project.getProjectName(), type, e.ownerName);
+                    }
+                    System.out.println("=============================================================");
+                } else {
+                    System.out.println("Failed to save changes.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number or 'q'.");
+            }
+        }
+    }
+	
     private static boolean isEligibleForRoomType(User user, String roomType) {
         String maritalStatus = user.getMaritalStatus().toLowerCase();
         int age = user.getAge();
@@ -969,6 +1067,7 @@ public class SDDA_grp3 {
                     System.out.println("3) Create Project");
                     System.out.println("4) Toggle Visibility");
                     System.out.println("5) Edit Project");
+					System.out.println("6) Approve Owners");
                 } else {
                     System.out.println("3) View Eligible Projects");
                 }
@@ -1008,6 +1107,13 @@ public class SDDA_grp3 {
                         if (user instanceof Manager) {
                             editProject((Manager) user, scanner);
                         } else {
+                            System.out.println("Invalid choice.");
+                        }
+                        break;
+				    case "6":
+						if (user instanceof Manager) {
+							approveOwners((Manager) user, scanner);
+						} else {
                             System.out.println("Invalid choice.");
                         }
                         break;
