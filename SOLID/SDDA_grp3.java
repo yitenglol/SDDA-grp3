@@ -3,6 +3,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
+import java.util.StringJoiner;
+import java.util.function.Consumer;
 
 abstract class User {
     private String name;
@@ -91,6 +93,7 @@ class Project {
     private List<String> type2OwnerUnsuccessful;
     private List<String> type2OwnerSuccessful;
     private List<String> type2OwnerBooked;
+    private List<String> withdrawalPending;
 
     public Project(String projectName, String neighborhood, String type1, int numUnitsType1, int priceType1,
                   String type2, int numUnitsType2, int priceType2, String openingDate, String closingDate,
@@ -99,7 +102,8 @@ class Project {
                   List<String> type1OwnerPending, List<String> type1OwnerUnsuccessful,
                   List<String> type1OwnerSuccessful, List<String> type1OwnerBooked,
                   List<String> type2OwnerPending, List<String> type2OwnerUnsuccessful,
-                  List<String> type2OwnerSuccessful, List<String> type2OwnerBooked) {
+                  List<String> type2OwnerSuccessful, List<String> type2OwnerBooked,
+                  List<String> withdrawalPending) {
         this.projectName = projectName;
         this.neighborhood = neighborhood;
         this.type1 = type1;
@@ -124,6 +128,7 @@ class Project {
         this.type2OwnerUnsuccessful = type2OwnerUnsuccessful != null ? new ArrayList<>(type2OwnerUnsuccessful) : new ArrayList<>();
         this.type2OwnerSuccessful = type2OwnerSuccessful != null ? new ArrayList<>(type2OwnerSuccessful) : new ArrayList<>();
         this.type2OwnerBooked = type2OwnerBooked != null ? new ArrayList<>(type2OwnerBooked) : new ArrayList<>();
+        this.withdrawalPending = withdrawalPending != null ? new ArrayList<>(withdrawalPending) : new ArrayList<>();
     }
 
     public String getProjectName() { return projectName; }
@@ -151,6 +156,7 @@ class Project {
     public List<String> getType2OwnerUnsuccessful() { return new ArrayList<>(type2OwnerUnsuccessful); }
     public List<String> getType2OwnerSuccessful() { return new ArrayList<>(type2OwnerSuccessful); }
     public List<String> getType2OwnerBooked() { return new ArrayList<>(type2OwnerBooked); }
+    public List<String> getWithdrawalPending() { return new ArrayList<>(withdrawalPending); }
 
     public void setNeighborhood(String neighborhood) { this.neighborhood = neighborhood; }
     public void setNumUnitsType1(int numUnitsType1) { this.numUnitsType1 = numUnitsType1; }
@@ -160,46 +166,17 @@ class Project {
     public void setOpeningDate(String openingDate) { this.openingDate = openingDate; }
     public void setClosingDate(String closingDate) { this.closingDate = closingDate; }
     public void setOfficerSlots(int officerSlots) { this.officerSlots = officerSlots; }
-	
-	public void setOfficerPending(List<String> officerPending) {
-        this.officerPending = new ArrayList<>(officerPending);
-    }
-
-    public void setOfficerUnsuccessful(List<String> officerUnsuccessful) {
-        this.officerUnsuccessful = new ArrayList<>(officerUnsuccessful);
-    }
-
-    public void setType1OwnerPending(List<String> type1OwnerPending) {
-        this.type1OwnerPending = new ArrayList<>(type1OwnerPending);
-    }
-
-    public void setType1OwnerUnsuccessful(List<String> type1OwnerUnsuccessful) {
-        this.type1OwnerUnsuccessful = new ArrayList<>(type1OwnerUnsuccessful);
-    }
-
-    public void setType1OwnerSuccessful(List<String> type1OwnerSuccessful) {
-        this.type1OwnerSuccessful = new ArrayList<>(type1OwnerSuccessful);
-    }
-
-    public void setType1OwnerBooked(List<String> type1OwnerBooked) {
-        this.type1OwnerBooked = new ArrayList<>(type1OwnerBooked);
-    }
-
-    public void setType2OwnerPending(List<String> type2OwnerPending) {
-        this.type2OwnerPending = new ArrayList<>(type2OwnerPending);
-    }
-
-    public void setType2OwnerUnsuccessful(List<String> type2OwnerUnsuccessful) {
-        this.type2OwnerUnsuccessful = new ArrayList<>(type2OwnerUnsuccessful);
-    }
-
-    public void setType2OwnerSuccessful(List<String> type2OwnerSuccessful) {
-        this.type2OwnerSuccessful = new ArrayList<>(type2OwnerSuccessful);
-    }
-
-    public void setType2OwnerBooked(List<String> type2OwnerBooked) {
-        this.type2OwnerBooked = new ArrayList<>(type2OwnerBooked);
-    }
+    public void setOfficerPending(List<String> officerPending) { this.officerPending = new ArrayList<>(officerPending); }
+    public void setOfficerUnsuccessful(List<String> officerUnsuccessful) { this.officerUnsuccessful = new ArrayList<>(officerUnsuccessful); }
+    public void setType1OwnerPending(List<String> type1OwnerPending) { this.type1OwnerPending = new ArrayList<>(type1OwnerPending); }
+    public void setType1OwnerUnsuccessful(List<String> type1OwnerUnsuccessful) { this.type1OwnerUnsuccessful = new ArrayList<>(type1OwnerUnsuccessful); }
+    public void setType1OwnerSuccessful(List<String> type1OwnerSuccessful) { this.type1OwnerSuccessful = new ArrayList<>(type1OwnerSuccessful); }
+    public void setType1OwnerBooked(List<String> type1OwnerBooked) { this.type1OwnerBooked = new ArrayList<>(type1OwnerBooked); }
+    public void setType2OwnerPending(List<String> type2OwnerPending) { this.type2OwnerPending = new ArrayList<>(type2OwnerPending); }
+    public void setType2OwnerUnsuccessful(List<String> type2OwnerUnsuccessful) { this.type2OwnerUnsuccessful = new ArrayList<>(type2OwnerUnsuccessful); }
+    public void setType2OwnerSuccessful(List<String> type2OwnerSuccessful) { this.type2OwnerSuccessful = new ArrayList<>(type2OwnerSuccessful); }
+    public void setType2OwnerBooked(List<String> type2OwnerBooked) { this.type2OwnerBooked = new ArrayList<>(type2OwnerBooked); }
+    public void setWithdrawalPending(List<String> withdrawalPending) { this.withdrawalPending = new ArrayList<>(withdrawalPending); }
 }
 
 class FileHandler {
@@ -262,11 +239,10 @@ class FileHandler {
         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
             boolean firstLine = true;
-            int expectedColumns = 24; // Number of columns after adding new fields
             while ((line = br.readLine()) != null) {
                 if (firstLine) {
                     firstLine = false;
-                    continue; // Skip header processing for column presence checks (handled dynamically)
+                    continue;
                 }
                 String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
                 List<String> fields = new ArrayList<>();
@@ -293,11 +269,10 @@ class FileHandler {
                 String closingDate = fields.get(9);
                 String managerName = fields.get(10);
                 int officerSlots = Integer.parseInt(fields.get(11));
-                String officersStr = fields.get(12);
                 List<String> officers = parseCommaSeparatedList(fields, 12);
 
                 boolean visibility = false;
-                if (fields.size() > 13) {
+                if (fields.size() > 13 && !fields.get(13).isEmpty()) {
                     visibility = Boolean.parseBoolean(fields.get(13));
                 }
 
@@ -311,8 +286,9 @@ class FileHandler {
                 List<String> type2OwnerUnsuccessful = parseCommaSeparatedList(fields, 21);
                 List<String> type2OwnerSuccessful = parseCommaSeparatedList(fields, 22);
                 List<String> type2OwnerBooked = parseCommaSeparatedList(fields, 23);
+                List<String> withdrawalPending = fields.size() > 24 ? parseCommaSeparatedList(fields, 24) : new ArrayList<>();
 
-                Project project = new Project(projectName, neighborhood, type1, numUnitsType1, priceType1, type2, numUnitsType2, priceType2, openingDate, closingDate, managerName, officerSlots, officers, visibility, officerPending, officerUnsuccessful, type1OwnerPending, type1OwnerUnsuccessful, type1OwnerSuccessful, type1OwnerBooked, type2OwnerPending, type2OwnerUnsuccessful, type2OwnerSuccessful, type2OwnerBooked);
+                Project project = new Project(projectName, neighborhood, type1, numUnitsType1, priceType1, type2, numUnitsType2, priceType2, openingDate, closingDate, managerName, officerSlots, officers, visibility, officerPending, officerUnsuccessful, type1OwnerPending, type1OwnerUnsuccessful, type1OwnerSuccessful, type1OwnerBooked, type2OwnerPending, type2OwnerUnsuccessful, type2OwnerSuccessful, type2OwnerBooked, withdrawalPending);
                 projects.add(project);
             }
         } catch (IOException | NumberFormatException e) {
@@ -337,7 +313,7 @@ class FileHandler {
 
     public static boolean writeProjectsToCSV(String filename, List<Project> projects) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
-            pw.println("Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility,OfficerPending,OfficerUnsuccessful,Type1OwnerPending,Type1OwnerUnsuccessful,Type1OwnerSuccessful,Type1OwnerBooked,Type2OwnerPending,Type2OwnerUnsuccessful,Type2OwnerSuccessful,Type2OwnerBooked");
+            pw.println("Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility,OfficerPending,OfficerUnsuccessful,Type1OwnerPending,Type1OwnerUnsuccessful,Type1OwnerSuccessful,Type1OwnerBooked,Type2OwnerPending,Type2OwnerUnsuccessful,Type2OwnerSuccessful,Type2OwnerBooked,WithdrawalPending");
             for (Project project : projects) {
                 String officersStr = getCSVString(project.getOfficers());
                 String officerPendingStr = getCSVString(project.getOfficerPending());
@@ -350,8 +326,9 @@ class FileHandler {
                 String type2OwnerUnsuccessfulStr = getCSVString(project.getType2OwnerUnsuccessful());
                 String type2OwnerSuccessfulStr = getCSVString(project.getType2OwnerSuccessful());
                 String type2OwnerBookedStr = getCSVString(project.getType2OwnerBooked());
+                String withdrawalPendingStr = getCSVString(project.getWithdrawalPending());
 
-                pw.printf("%s,%s,%s,%d,%d,%s,%d,%d,%s,%s,%s,%d,%s,%b,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s%n",
+                pw.printf("%s,%s,%s,%d,%d,%s,%d,%d,%s,%s,%s,%d,%s,%b,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s%n",
                         project.getProjectName(),
                         project.getNeighborhood(),
                         project.getType1(),
@@ -375,7 +352,8 @@ class FileHandler {
                         type2OwnerPendingStr,
                         type2OwnerUnsuccessfulStr,
                         type2OwnerSuccessfulStr,
-                        type2OwnerBookedStr);
+                        type2OwnerBookedStr,
+                        withdrawalPendingStr);
             }
             return true;
         } catch (IOException e) {
@@ -437,8 +415,27 @@ class PasswordChanger {
     }
 }
 
+class Enquiry {
+    private String name;
+    private String project;
+    private String enquiry;
+    private String reply;
+
+    public Enquiry(String name, String project, String enquiry, String reply) {
+        this.name = name;
+        this.project = project;
+        this.enquiry = enquiry;
+        this.reply = reply;
+    }
+
+    public String getName() { return name; }
+    public String getProject() { return project; }
+    public String getEnquiry() { return enquiry; }
+    public String getReply() { return reply; }
+}
+
 public class SDDA_grp3 {
-	private static class EligibleEntry {
+    private static class EligibleEntry {
         Project project;
         String typeDesignation;
         String displayString;
@@ -449,8 +446,8 @@ public class SDDA_grp3 {
             this.displayString = displayString;
         }
     }
-	
-	private static class PendingEntry {
+
+    private static class PendingEntry {
         Project project;
         String type;
         String ownerName;
@@ -461,104 +458,103 @@ public class SDDA_grp3 {
             this.ownerName = ownerName;
         }
     }
-	
-	private static void approveOwners(Manager manager, Scanner scanner) {
-		List<Project> allProjects = FileHandler.readProjectsFromCSV("ProjectList.csv");
-		List<Project> managedProjects = allProjects.stream()
-				.filter(p -> p.getManagerName().equalsIgnoreCase(manager.getName()))
-				.collect(Collectors.toList());
 
-		List<PendingEntry> pendingEntries = new ArrayList<>();
-		for (Project project : managedProjects) {
-			project.getType1OwnerPending().forEach(owner -> 
-				pendingEntries.add(new PendingEntry(project, "Type1", owner)));
-			project.getType2OwnerPending().forEach(owner -> 
-				pendingEntries.add(new PendingEntry(project, "Type2", owner)));
-		}
+    private static void approveOwners(Manager manager, Scanner scanner) {
+        List<Project> allProjects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+        List<Project> managedProjects = allProjects.stream()
+                .filter(p -> p.getManagerName().equalsIgnoreCase(manager.getName()))
+                .collect(Collectors.toList());
 
-		if (pendingEntries.isEmpty()) {
-			System.out.println("No pending applications to approve.");
-			return;
-		}
+        List<PendingEntry> pendingEntries = new ArrayList<>();
+        for (Project project : managedProjects) {
+            project.getType1OwnerPending().forEach(owner -> 
+                pendingEntries.add(new PendingEntry(project, "Type1", owner)));
+            project.getType2OwnerPending().forEach(owner -> 
+                pendingEntries.add(new PendingEntry(project, "Type2", owner)));
+        }
 
-		System.out.println("=============================================================");
-		System.out.println("Pending Applications");
-		System.out.println("Index\tProject Name\t\tType\tOwner");
-		int index = 1;
-		for (PendingEntry entry : pendingEntries) {
-			String type = entry.type.equals("Type1") ? entry.project.getType1() : entry.project.getType2();
-			System.out.printf("%d\t\t%s\t\t%s\t\t%s%n", index++, entry.project.getProjectName(), type, entry.ownerName);
-		}
-		System.out.println("=============================================================");
+        if (pendingEntries.isEmpty()) {
+            System.out.println("No pending applications to approve.");
+            return;
+        }
 
-		while (true) {
-			System.out.print("Enter number to approve (q to exit): ");
-			String input = scanner.nextLine().trim();
-			if (input.equalsIgnoreCase("q")) break;
+        System.out.println("=============================================================");
+        System.out.println("Pending Applications");
+        System.out.println("Index\tProject Name\t\tType\tOwner");
+        int index = 1;
+        for (PendingEntry entry : pendingEntries) {
+            String type = entry.type.equals("Type1") ? entry.project.getType1() : entry.project.getType2();
+            System.out.printf("%d\t\t%s\t\t%s\t\t%s%n", index++, entry.project.getProjectName(), type, entry.ownerName);
+        }
+        System.out.println("=============================================================");
 
-			try {
-				int selectedIndex = Integer.parseInt(input) - 1;
-				if (selectedIndex < 0 || selectedIndex >= pendingEntries.size()) {
-					System.out.println("Invalid index.");
-					continue;
-				}
+        while (true) {
+            System.out.print("Enter number to approve (q to exit): ");
+            String input = scanner.nextLine().trim();
+            if (input.equalsIgnoreCase("q")) break;
 
-				PendingEntry entry = pendingEntries.get(selectedIndex);
-				Project project = entry.project;
-				String owner = entry.ownerName;
+            try {
+                int selectedIndex = Integer.parseInt(input) - 1;
+                if (selectedIndex < 0 || selectedIndex >= pendingEntries.size()) {
+                    System.out.println("Invalid index.");
+                    continue;
+                }
 
-				// Fixed code: Use setters to update project state
-				if (entry.type.equals("Type1")) {
-					List<String> newPending = new ArrayList<>(project.getType1OwnerPending());
-					newPending.remove(owner);
-					project.setType1OwnerPending(newPending);
-					
-					List<String> newSuccessful = new ArrayList<>(project.getType1OwnerSuccessful());
-					newSuccessful.add(owner);
-					project.setType1OwnerSuccessful(newSuccessful);
-				} else {
-					List<String> newPending = new ArrayList<>(project.getType2OwnerPending());
-					newPending.remove(owner);
-					project.setType2OwnerPending(newPending);
-					
-					List<String> newSuccessful = new ArrayList<>(project.getType2OwnerSuccessful());
-					newSuccessful.add(owner);
-					project.setType2OwnerSuccessful(newSuccessful);
-				}
+                PendingEntry entry = pendingEntries.get(selectedIndex);
+                Project project = entry.project;
+                String owner = entry.ownerName;
 
-				if (FileHandler.writeProjectsToCSV("ProjectList.csv", allProjects)) {
-					System.out.printf("Success! %s approved for %s type %s.%n", owner, 
-							project.getProjectName(), entry.type.equals("Type1") ? project.getType1() : project.getType2());
-					
-					pendingEntries.clear();
-					managedProjects.forEach(p -> {
-						p.getType1OwnerPending().forEach(o -> pendingEntries.add(new PendingEntry(p, "Type1", o)));
-						p.getType2OwnerPending().forEach(o -> pendingEntries.add(new PendingEntry(p, "Type2", o)));
-					});
+                if (entry.type.equals("Type1")) {
+                    List<String> newPending = new ArrayList<>(project.getType1OwnerPending());
+                    newPending.remove(owner);
+                    project.setType1OwnerPending(newPending);
+                    
+                    List<String> newSuccessful = new ArrayList<>(project.getType1OwnerSuccessful());
+                    newSuccessful.add(owner);
+                    project.setType1OwnerSuccessful(newSuccessful);
+                } else {
+                    List<String> newPending = new ArrayList<>(project.getType2OwnerPending());
+                    newPending.remove(owner);
+                    project.setType2OwnerPending(newPending);
+                    
+                    List<String> newSuccessful = new ArrayList<>(project.getType2OwnerSuccessful());
+                    newSuccessful.add(owner);
+                    project.setType2OwnerSuccessful(newSuccessful);
+                }
 
-					if (pendingEntries.isEmpty()) {
-						System.out.println("No more pending applications.");
-						break;
-					}
+                if (FileHandler.writeProjectsToCSV("ProjectList.csv", allProjects)) {
+                    System.out.printf("Success! %s approved for %s type %s.%n", owner, 
+                            project.getProjectName(), entry.type.equals("Type1") ? project.getType1() : project.getType2());
+                    
+                    pendingEntries.clear();
+                    managedProjects.forEach(p -> {
+                        p.getType1OwnerPending().forEach(o -> pendingEntries.add(new PendingEntry(p, "Type1", o)));
+                        p.getType2OwnerPending().forEach(o -> pendingEntries.add(new PendingEntry(p, "Type2", o)));
+                    });
 
-					System.out.println("=============================================================");
-					System.out.println("Pending Applications");
-					System.out.println("Index\tProject Name\t\tType\tOwner");
-					index = 1;
-					for (PendingEntry e : pendingEntries) {
-						String type = e.type.equals("Type1") ? e.project.getType1() : e.project.getType2();
-						System.out.printf("%d\t\t%s\t\t%s\t\t%s%n", index++, e.project.getProjectName(), type, e.ownerName);
-					}
-					System.out.println("=============================================================");
-				} else {
-					System.out.println("Failed to save changes.");
-				}
-			} catch (NumberFormatException e) {
-				System.out.println("Invalid input. Please enter a number or 'q'.");
-			}
-		}
-	}
-	
+                    if (pendingEntries.isEmpty()) {
+                        System.out.println("No more pending applications.");
+                        break;
+                    }
+
+                    System.out.println("=============================================================");
+                    System.out.println("Pending Applications");
+                    System.out.println("Index\tProject Name\t\tType\tOwner");
+                    index = 1;
+                    for (PendingEntry e : pendingEntries) {
+                        String type = e.type.equals("Type1") ? e.project.getType1() : e.project.getType2();
+                        System.out.printf("%d\t\t%s\t\t%s\t\t%s%n", index++, e.project.getProjectName(), type, e.ownerName);
+                    }
+                    System.out.println("=============================================================");
+                } else {
+                    System.out.println("Failed to save changes.");
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid input. Please enter a number or 'q'.");
+            }
+        }
+    }
+
     private static boolean isEligibleForRoomType(User user, String roomType) {
         String maritalStatus = user.getMaritalStatus().toLowerCase();
         int age = user.getAge();
@@ -571,7 +567,7 @@ public class SDDA_grp3 {
         }
         return false;
     }
-	
+
     private static boolean isUserInOfficerOrPending(User user, List<Project> projects) {
         for (Project project : projects) {
             if (project.getOfficers().contains(user.getName()) || project.getOfficerPending().contains(user.getName())) {
@@ -580,16 +576,17 @@ public class SDDA_grp3 {
         }
         return false;
     }
-    
 
     private static boolean isUserInApplicationLists(User user, List<Project> projects) {
         for (Project project : projects) {
             List<String> type1Lists = new ArrayList<>();
             type1Lists.addAll(project.getType1OwnerPending());
+            type1Lists.addAll(project.getType1OwnerUnsuccessful());
             type1Lists.addAll(project.getType1OwnerSuccessful());
             type1Lists.addAll(project.getType1OwnerBooked());
             List<String> type2Lists = new ArrayList<>();
             type2Lists.addAll(project.getType2OwnerPending());
+            type2Lists.addAll(project.getType2OwnerUnsuccessful());
             type2Lists.addAll(project.getType2OwnerSuccessful());
             type2Lists.addAll(project.getType2OwnerBooked());
             if (type1Lists.contains(user.getName()) || type2Lists.contains(user.getName())) {
@@ -600,33 +597,158 @@ public class SDDA_grp3 {
     }
 
     private static String findPendingApplicationMessage(User user, List<Project> projects) {
-        for (Project project : projects) {
-            if (project.getType1OwnerPending().contains(user.getName())) {
-                return String.format("You cannot apply for any projects, you are PENDING for %s type %s", project.getProjectName(), project.getType1());
+        for (Project p : projects) {
+            if (p.getWithdrawalPending().contains(user.getName())) {
+                return String.format("You cannot apply or withdraw any projects, you are PENDING WITHDRAWAL for %s", p.getProjectName());
             }
-            if (project.getType1OwnerSuccessful().contains(user.getName())) {
-                return String.format("You cannot apply for any projects, you are SUCCESSFUL for %s type %s", project.getProjectName(), project.getType1());
+        }
+
+        for (Project p : projects) {
+            if (p.getType1OwnerPending().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are PENDING for %s type %s", p.getProjectName(), p.getType1());
             }
-            if (project.getType1OwnerBooked().contains(user.getName())) {
-                return String.format("You cannot apply for any projects, you are BOOKED for %s type %s", project.getProjectName(), project.getType1());
+            if (p.getType1OwnerSuccessful().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are SUCCESSFUL for %s type %s", p.getProjectName(), p.getType1());
             }
-            if (project.getType2OwnerPending().contains(user.getName())) {
-                return String.format("You cannot apply for any projects, you are PENDING for %s type %s", project.getProjectName(), project.getType2());
+            if (p.getType1OwnerBooked().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are BOOKED for %s type %s", p.getProjectName(), p.getType1());
             }
-            if (project.getType2OwnerSuccessful().contains(user.getName())) {
-                return String.format("You cannot apply for any projects, you are SUCCESSFUL for %s type %s", project.getProjectName(), project.getType2());
+            if (p.getType2OwnerPending().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are PENDING for %s type %s", p.getProjectName(), p.getType2());
             }
-            if (project.getType2OwnerBooked().contains(user.getName())) {
-                return String.format("You cannot apply for any projects, you are BOOKED for %s type %s", project.getProjectName(), project.getType2());
+            if (p.getType2OwnerSuccessful().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are SUCCESSFUL for %s type %s", p.getProjectName(), p.getType2());
+            }
+            if (p.getType2OwnerBooked().contains(user.getName())) {
+                return String.format("You cannot apply for any projects, you are BOOKED for %s type %s", p.getProjectName(), p.getType2());
             }
         }
         return "You cannot apply for any projects due to an existing application.";
     }
 
-    
+    private static List<Enquiry> readEnquiries() {
+        List<Enquiry> enquiries = new ArrayList<>();
+        File file = new File("EnquiryList.csv");
+        if (!file.exists()) {
+            return enquiries;
+        }
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            boolean firstLine = true;
+            while ((line = br.readLine()) != null) {
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+                String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+                if (parts.length < 4) continue;
+                String name = parts[0].trim();
+                String project = parts[1].trim();
+                String enquiryStr = parts[2].trim();
+                String reply = parts[3].trim();
+                enquiries.add(new Enquiry(name, project, enquiryStr, reply));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return enquiries;
+    }
+
+    private static void writeEnquiry(String name, String project, String enquiry) {
+        List<Enquiry> existingEnquiries = readEnquiries();
+        existingEnquiries.add(new Enquiry(name, project, enquiry, ""));
+        try (PrintWriter pw = new PrintWriter("EnquiryList.csv")) {
+            pw.println("Name,Project,String,Reply");
+            for (Enquiry e : existingEnquiries) {
+                pw.printf("%s,%s,%s,%s%n", e.getName(), e.getProject(), e.getEnquiry(), e.getReply());
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void handleWithdrawal(User user) {
+        List<Project> allProjects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+        boolean anyChanges = false;
+
+        for (Project project : allProjects) {
+            boolean modified = false;
+            modified |= removeFromList(project.getType1OwnerPending(), user.getName(), project::setType1OwnerPending);
+            modified |= removeFromList(project.getType1OwnerUnsuccessful(), user.getName(), project::setType1OwnerUnsuccessful);
+            modified |= removeFromList(project.getType1OwnerSuccessful(), user.getName(), project::setType1OwnerSuccessful);
+            modified |= removeFromList(project.getType1OwnerBooked(), user.getName(), project::setType1OwnerBooked);
+            modified |= removeFromList(project.getType2OwnerPending(), user.getName(), project::setType2OwnerPending);
+            modified |= removeFromList(project.getType2OwnerUnsuccessful(), user.getName(), project::setType2OwnerUnsuccessful);
+            modified |= removeFromList(project.getType2OwnerSuccessful(), user.getName(), project::setType2OwnerSuccessful);
+            modified |= removeFromList(project.getType2OwnerBooked(), user.getName(), project::setType2OwnerBooked);
+
+            if (modified) {
+                List<String> withdrawalPending = new ArrayList<>(project.getWithdrawalPending());
+                withdrawalPending.add(user.getName());
+                project.setWithdrawalPending(withdrawalPending);
+                anyChanges = true;
+            }
+        }
+
+        if (anyChanges) {
+            boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", allProjects);
+            if (success) {
+                System.out.printf("Withdrawal Request Sent! Welcome %s, %d, %s %s.%n",
+                        user.getName(), user.getAge(), user.getMaritalStatus(),
+                        user instanceof Officer ? "Officer" : "Applicant");
+            } else {
+                System.out.println("Error saving withdrawal.");
+            }
+        } else {
+            System.out.println("No applications found to withdraw.");
+        }
+    }
+
+    private static boolean removeFromList(List<String> list, String name, Consumer<List<String>> setter) {
+        if (list.contains(name)) {
+            List<String> newList = new ArrayList<>(list);
+            newList.remove(name);
+            setter.accept(newList);
+            return true;
+        }
+        return false;
+    }
+
+    private static void handleEnquiry(User user, List<EligibleEntry> eligibleEntries, Scanner scanner) {
+        System.out.print("Select project to enquire (enter index number): ");
+        String indexInput = scanner.nextLine().trim();
+        try {
+            int index = Integer.parseInt(indexInput) - 1;
+            if (index < 0 || index >= eligibleEntries.size()) {
+                System.out.println("Invalid index.");
+                return;
+            }
+            EligibleEntry entry = eligibleEntries.get(index);
+            String projectName = entry.project.getProjectName();
+            System.out.print("Enter enquiry for " + projectName + ": ");
+            String enquiry = scanner.nextLine().trim();
+
+            List<Enquiry> existingEnquiries = readEnquiries();
+            boolean duplicate = existingEnquiries.stream()
+                    .anyMatch(e -> e.getName().equals(user.getName()) 
+                            && e.getProject().equals(projectName)
+                            && e.getEnquiry().equals(enquiry));
+            if (duplicate) {
+                System.out.println("Error! Duplicate enquiry.");
+            } else {
+                writeEnquiry(user.getName(), projectName, enquiry);
+                System.out.printf("Success Project Enquired! Welcome %s, %d, %s %s.%n",
+                        user.getName(), user.getAge(), user.getMaritalStatus(),
+                        user instanceof Officer ? "Officer" : "Applicant");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input.");
+        }
+    }
+
     private static void viewEligibleProjects(User user, Scanner scanner) {
-        List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
-        List<Project> visibleProjects = projects.stream().filter(Project::getVisibility).collect(Collectors.toList());
+        List<Project> allProjects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+        List<Project> visibleProjects = allProjects.stream().filter(Project::getVisibility).collect(Collectors.toList());
         List<EligibleEntry> eligibleEntries = new ArrayList<>();
 
         for (Project project : visibleProjects) {
@@ -646,18 +768,21 @@ public class SDDA_grp3 {
         String pendingMessage = null;
 
         if (user instanceof Officer) {
-            if (isUserInOfficerOrPending(user, projects)) {
+            if (isUserInOfficerOrPending(user, allProjects)) {
                 canApply = false;
                 pendingMessage = "You cannot apply because you are assigned as an officer in a project.";
             }
         }
 
         if (canApply) {
-            if (isUserInApplicationLists(user, projects)) {
+            if (isUserInApplicationLists(user, allProjects)) {
                 canApply = false;
-                pendingMessage = findPendingApplicationMessage(user, projects);
+                pendingMessage = findPendingApplicationMessage(user, allProjects);
             }
         }
+
+        boolean canWithdraw = isUserInApplicationLists(user, allProjects) && !isUserInWithdrawalPending(user, allProjects);
+        boolean canEnquire = true;
 
         if (eligibleEntries.isEmpty()) {
             System.out.printf("No Eligible Projects Welcome %s, %d, %s %s.%n",
@@ -672,45 +797,77 @@ public class SDDA_grp3 {
             System.out.println("=============================================================");
             if (!canApply) {
                 System.out.println(pendingMessage);
-            } else {
-                System.out.print("Would you like to apply for a project? (enter index number or c to cancel): ");
-                String input = scanner.nextLine().trim();
-                if (input.equalsIgnoreCase("c")) {
-                    return;
-                }
-                try {
-                    int selectedIndex = Integer.parseInt(input);
-                    if (selectedIndex < 1 || selectedIndex > eligibleEntries.size()) {
-                        System.out.println("Invalid index.");
-                        return;
-                    }
-                    EligibleEntry selectedEntry = eligibleEntries.get(selectedIndex - 1);
-                    Project selectedProject = selectedEntry.project;
-                    String typeDesignation = selectedEntry.typeDesignation;
+            }
 
-                    if (typeDesignation.equals("Type1")) {
-                        List<String> newPending = new ArrayList<>(selectedProject.getType1OwnerPending());
-                        newPending.add(user.getName());
-                        selectedProject.setType1OwnerPending(newPending);
-                    } else {
-                        List<String> newPending = new ArrayList<>(selectedProject.getType2OwnerPending());
-                        newPending.add(user.getName());
-                        selectedProject.setType2OwnerPending(newPending);
-                    }
+            StringJoiner options = new StringJoiner(", ");
+            if (canApply) {
+                options.add("a to apply");
+            }
+            if (canWithdraw) {
+                options.add("w to withdraw");
+            }
+            options.add("e to enquiry");
+            options.add("c to cancel");
+            System.out.print("Choice (" + options + "): ");
+            String choice = scanner.nextLine().trim().toLowerCase();
 
-                    boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
-                    if (success) {
-                        System.out.printf("Success Project Applied! Welcome %s, %d, %s %s.%n",
-                                user.getName(), user.getAge(), user.getMaritalStatus(),
-                                user instanceof Officer ? "Officer" : "Applicant");
-                    } else {
-                        System.out.println("Error applying to project.");
+            switch (choice) {
+                case "a":
+                    System.out.print("Select project to apply (enter index number): ");
+                    String input = scanner.nextLine().trim();
+                    try {
+                        int selectedIndex = Integer.parseInt(input) - 1;
+                        if (selectedIndex < 0 || selectedIndex >= eligibleEntries.size()) {
+                            System.out.println("Invalid index.");
+                            return;
+                        }
+                        EligibleEntry selectedEntry = eligibleEntries.get(selectedIndex);
+                        Project selectedProject = selectedEntry.project;
+                        String typeDesignation = selectedEntry.typeDesignation;
+
+                        if (typeDesignation.equals("Type1")) {
+                            List<String> newPending = new ArrayList<>(selectedProject.getType1OwnerPending());
+                            newPending.add(user.getName());
+                            selectedProject.setType1OwnerPending(newPending);
+                        } else {
+                            List<String> newPending = new ArrayList<>(selectedProject.getType2OwnerPending());
+                            newPending.add(user.getName());
+                            selectedProject.setType2OwnerPending(newPending);
+                        }
+
+                        boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", allProjects);
+                        if (success) {
+                            System.out.printf("Success Project Applied! Welcome %s, %d, %s %s.%n",
+                                    user.getName(), user.getAge(), user.getMaritalStatus(),
+                                    user instanceof Officer ? "Officer" : "Applicant");
+                        } else {
+                            System.out.println("Error applying to project.");
+                        }
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid input.");
                     }
-                } catch (NumberFormatException e) {
-                    System.out.println("Invalid input.");
-                }
+                    break;
+                case "w":
+                    handleWithdrawal(user);
+                    break;
+                case "e":
+                    handleEnquiry(user, eligibleEntries, scanner);
+                    break;
+                case "c":
+                    break;
+                default:
+                    System.out.println("Invalid choice.");
             }
         }
+    }
+
+    private static boolean isUserInWithdrawalPending(User user, List<Project> projects) {
+        for (Project p : projects) {
+            if (p.getWithdrawalPending().contains(user.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void createProject(Manager manager, Scanner scanner) {
@@ -720,8 +877,7 @@ public class SDDA_grp3 {
 
         do {
             System.out.print("Project Name: ");
-            String inputName = scanner.nextLine().trim();
-            projectName = inputName;
+            projectName = scanner.nextLine().trim();
             String finalProjectName = projectName;
             projectExists = projects.stream().anyMatch(p -> p.getProjectName().equalsIgnoreCase(finalProjectName));
             if (projectExists) {
@@ -789,7 +945,7 @@ public class SDDA_grp3 {
             }
         } while (officerSlots < 0 || officerSlots > 10);
 
-        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, new ArrayList<>(), false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, new ArrayList<>(), false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         projects.add(newProject);
 
         boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
@@ -817,12 +973,12 @@ public class SDDA_grp3 {
         System.out.print("Enter number to toggle: ");
         String input = scanner.nextLine().trim();
         try {
-            int selectedIndex = Integer.parseInt(input);
-            if (selectedIndex < 1 || selectedIndex > projects.size()) {
+            int selectedIndex = Integer.parseInt(input) - 1;
+            if (selectedIndex < 0 || selectedIndex >= projects.size()) {
                 System.out.println("Invalid index.");
                 return;
             }
-            Project project = projects.get(selectedIndex - 1);
+            Project project = projects.get(selectedIndex);
             project.setVisibility(!project.getVisibility());
             boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
             if (success) {
@@ -867,12 +1023,12 @@ public class SDDA_grp3 {
         System.out.print("Enter number to edit: ");
         String input = scanner.nextLine().trim();
         try {
-            int selectedIndex = Integer.parseInt(input);
-            if (selectedIndex < 1 || selectedIndex > projects.size()) {
+            int selectedIndex = Integer.parseInt(input) - 1;
+            if (selectedIndex < 0 || selectedIndex >= projects.size()) {
                 System.out.println("Invalid index.");
                 return;
             }
-            Project project = projects.get(selectedIndex - 1);
+            Project project = projects.get(selectedIndex);
 
             System.out.print("Neighbourhood (" + project.getNeighborhood() + ", empty to keep): ");
             String neighborhoodInput = scanner.nextLine().trim();
@@ -1034,7 +1190,7 @@ public class SDDA_grp3 {
     }
 
     public static void main(String[] args) {
-		File enquiryFile = new File("EnquiryList.csv");
+        File enquiryFile = new File("EnquiryList.csv");
         if (!enquiryFile.exists()) {
             try (PrintWriter pw = new PrintWriter(enquiryFile)) {
                 pw.println("Name,Project,String,Reply");
@@ -1078,7 +1234,7 @@ public class SDDA_grp3 {
                     System.out.println("3) Create Project");
                     System.out.println("4) Toggle Visibility");
                     System.out.println("5) Edit Project");
-					System.out.println("6) Approve Owners");
+                    System.out.println("6) Approve Owners");
                 } else {
                     System.out.println("3) View Eligible Projects");
                 }
