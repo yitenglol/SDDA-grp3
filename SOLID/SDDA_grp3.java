@@ -96,14 +96,14 @@ class Project {
     private List<String> withdrawalPending;
 
     public Project(String projectName, String neighborhood, String type1, int numUnitsType1, int priceType1,
-                  String type2, int numUnitsType2, int priceType2, String openingDate, String closingDate,
-                  String managerName, int officerSlots, List<String> officers, boolean visibility,
-                  List<String> officerPending, List<String> officerUnsuccessful,
-                  List<String> type1OwnerPending, List<String> type1OwnerUnsuccessful,
-                  List<String> type1OwnerSuccessful, List<String> type1OwnerBooked,
-                  List<String> type2OwnerPending, List<String> type2OwnerUnsuccessful,
-                  List<String> type2OwnerSuccessful, List<String> type2OwnerBooked,
-                  List<String> withdrawalPending) {
+                   String type2, int numUnitsType2, int priceType2, String openingDate, String closingDate,
+                   String managerName, int officerSlots, List<String> officers, boolean visibility,
+                   List<String> officerPending, List<String> officerUnsuccessful,
+                   List<String> type1OwnerPending, List<String> type1OwnerUnsuccessful,
+                   List<String> type1OwnerSuccessful, List<String> type1OwnerBooked,
+                   List<String> type2OwnerPending, List<String> type2OwnerUnsuccessful,
+                   List<String> type2OwnerSuccessful, List<String> type2OwnerBooked,
+                   List<String> withdrawalPending) {
         this.projectName = projectName;
         this.neighborhood = neighborhood;
         this.type1 = type1;
@@ -369,6 +369,46 @@ class FileHandler {
         }
         return str;
     }
+
+    // Read all enquiries Testing
+    public static List<Enquiry> readEnquiries() {
+        List<Enquiry> enquiries = new ArrayList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader("EnquiryList.csv"))) {
+            String line;
+            boolean firstLine = true;
+            while ((line = br.readLine()) != null) {
+                if (firstLine) {
+                    firstLine = false;
+                    continue;
+                }
+                String[] parts = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)", -1);
+                if (parts.length < 4) continue;
+                String name = parts[0].trim();
+                String project = parts[1].trim();
+                String enquiryStr = parts[2].trim();
+                String reply = parts[3].trim();
+                enquiries.add(new Enquiry(name, project, enquiryStr, reply));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return enquiries;
+    }
+
+    // Write updated enquiries
+    public static boolean writeEnquiries(List<Enquiry> enquiries) {
+        try (PrintWriter pw = new PrintWriter("EnquiryList.csv")) {
+            pw.println("Name,Project,String,Reply");
+            for (Enquiry e : enquiries) {
+                pw.printf("%s,%s,%s,%s%n",
+                        e.getName(), e.getProject(), e.getEnquiry(), e.getReply());
+            }
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 }
 
 class NRICValidator {
@@ -432,6 +472,11 @@ class Enquiry {
     public String getProject() { return project; }
     public String getEnquiry() { return enquiry; }
     public String getReply() { return reply; }
+
+    // Testing
+    public void setReply(String reply) {
+        this.reply = reply;
+    }
 }
 
 public class SDDA_grp3 {
@@ -467,10 +512,10 @@ public class SDDA_grp3 {
 
         List<PendingEntry> pendingEntries = new ArrayList<>();
         for (Project project : managedProjects) {
-            project.getType1OwnerPending().forEach(owner -> 
-                pendingEntries.add(new PendingEntry(project, "Type1", owner)));
-            project.getType2OwnerPending().forEach(owner -> 
-                pendingEntries.add(new PendingEntry(project, "Type2", owner)));
+            project.getType1OwnerPending().forEach(owner ->
+                    pendingEntries.add(new PendingEntry(project, "Type1", owner)));
+            project.getType2OwnerPending().forEach(owner ->
+                    pendingEntries.add(new PendingEntry(project, "Type2", owner)));
         }
 
         if (pendingEntries.isEmpty()) {
@@ -508,7 +553,7 @@ public class SDDA_grp3 {
                     List<String> newPending = new ArrayList<>(project.getType1OwnerPending());
                     newPending.remove(owner);
                     project.setType1OwnerPending(newPending);
-                    
+
                     List<String> newSuccessful = new ArrayList<>(project.getType1OwnerSuccessful());
                     newSuccessful.add(owner);
                     project.setType1OwnerSuccessful(newSuccessful);
@@ -516,16 +561,16 @@ public class SDDA_grp3 {
                     List<String> newPending = new ArrayList<>(project.getType2OwnerPending());
                     newPending.remove(owner);
                     project.setType2OwnerPending(newPending);
-                    
+
                     List<String> newSuccessful = new ArrayList<>(project.getType2OwnerSuccessful());
                     newSuccessful.add(owner);
                     project.setType2OwnerSuccessful(newSuccessful);
                 }
 
                 if (FileHandler.writeProjectsToCSV("ProjectList.csv", allProjects)) {
-                    System.out.printf("Success! %s approved for %s type %s.%n", owner, 
+                    System.out.printf("Success! %s approved for %s type %s.%n", owner,
                             project.getProjectName(), entry.type.equals("Type1") ? project.getType1() : project.getType2());
-                    
+
                     pendingEntries.clear();
                     managedProjects.forEach(p -> {
                         p.getType1OwnerPending().forEach(o -> pendingEntries.add(new PendingEntry(p, "Type1", o)));
@@ -730,7 +775,7 @@ public class SDDA_grp3 {
 
             List<Enquiry> existingEnquiries = readEnquiries();
             boolean duplicate = existingEnquiries.stream()
-                    .anyMatch(e -> e.getName().equals(user.getName()) 
+                    .anyMatch(e -> e.getName().equals(user.getName())
                             && e.getProject().equals(projectName)
                             && e.getEnquiry().equals(enquiry));
             if (duplicate) {
@@ -1235,8 +1280,15 @@ public class SDDA_grp3 {
                     System.out.println("4) Toggle Visibility");
                     System.out.println("5) Edit Project");
                     System.out.println("6) Approve Owners");
-                } else {
-                    System.out.println("3) View Eligible Projects");
+                    System.out.println("7) Reply to Enquiries (Any Project)"); //Testing
+                    System.out.println("8) View Enquiries"); // Testing
+                } else if (user instanceof Officer) {
+                    System.out.println("3) View Eligible Projects"); //Testing
+                    System.out.println("4) Reply to Enquiries (Assigned Projects)"); //Testing
+                    System.out.println("5) View Enquiries"); //Testing
+                } else if (user instanceof Applicant) {
+                    System.out.println("3) View Eligible Projects"); // Testing
+                    System.out.println("4) View Enquiries"); //Testing
                 }
                 System.out.print("Choice: ");
                 String choice = scanner.nextLine().trim();
@@ -1266,29 +1318,154 @@ public class SDDA_grp3 {
                     case "4":
                         if (user instanceof Manager) {
                             toggleVisibility((Manager) user, scanner);
+                        } else if (user instanceof Officer) { //Testing
+                            replyToEnquiriesForOfficer((Officer) user);
+                        } else if (user instanceof Applicant) { // Testing view for applicants
+                            viewEnquiries(user);
                         } else {
-                            System.out.println("Invalid choice.");
+                            System.out.println("Invalid Choice!");
                         }
                         break;
                     case "5":
                         if (user instanceof Manager) {
                             editProject((Manager) user, scanner);
+                        } else if (user instanceof Officer) { //Testing view for officer
+                            viewEnquiries(user);
                         } else {
                             System.out.println("Invalid choice.");
                         }
                         break;
-				    case "6":
-						if (user instanceof Manager) {
-							approveOwners((Manager) user, scanner);
-						} else {
+                    case "6":
+                        if (user instanceof Manager) {
+                            approveOwners((Manager) user, scanner);
+                        } else {
                             System.out.println("Invalid choice.");
                         }
                         break;
+                    case "7": //Testing reply
+                        if (user instanceof Manager) {
+                            replyToEnquiriesForManager((Manager) user);
+                        }
+                        break;
+                    case "8": //Testing view
+                        if (user instanceof Manager) {
+                            viewEnquiries(user);;
+                        }
                     default:
                         System.out.println("Invalid choice.");
                 }
             }
         }
         scanner.close();
+    }
+
+    // Testing (Manager Reply eveything)
+    private static void replyToEnquiriesForManager(Manager manager) {
+        List<Enquiry> allEnquiries = FileHandler.readEnquiries();
+        List<Enquiry> pendingEnquiries = allEnquiries.stream()
+                .filter(e -> e.getReply().isEmpty())
+                .collect(Collectors.toList());
+
+        handleEnquiryReply(manager, pendingEnquiries, allEnquiries);
+    }
+
+    // Officer (Officer reply assigned)
+    private static void replyToEnquiriesForOfficer(Officer officer) {
+        List<Project> allProjects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+        List<String> assignedProjects = allProjects.stream()
+                .filter(p -> p.getOfficers().contains(officer.getName()))
+                .map(Project::getProjectName)
+                .collect(Collectors.toList());
+
+        List<Enquiry> allEnquiries = FileHandler.readEnquiries();
+        List<Enquiry> pendingEnquiries = allEnquiries.stream()
+                .filter(e -> e.getReply().isEmpty() && assignedProjects.contains(e.getProject()))
+                .collect(Collectors.toList());
+
+        handleEnquiryReply(officer, pendingEnquiries, allEnquiries);
+    }
+
+    private static void handleEnquiryReply(User user, List<Enquiry> pendingEnquiries, List<Enquiry> allEnquiries) {
+        if (pendingEnquiries.isEmpty()) {
+            System.out.println("No pending enquiries for your projects.");
+            return;
+        }
+
+        System.out.println("=============================================================");
+        System.out.println("Pending Enquiries");
+        System.out.println("Index\tProject\t\tEnquiry");
+        for (int i = 0; i < pendingEnquiries.size(); i++) {
+            Enquiry e = pendingEnquiries.get(i);
+            System.out.printf("%d\t%s\t\t%s%n", i + 1, e.getProject(), e.getEnquiry());
+        }
+        System.out.println("=============================================================");
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter enquiry index to reply (q to exit): ");
+        String input = scanner.nextLine().trim();
+        if (input.equalsIgnoreCase("q")) return;
+
+        try {
+            int index = Integer.parseInt(input) - 1;
+            if (index < 0 || index >= pendingEnquiries.size()) {
+                System.out.println("Invalid index.");
+                return;
+            }
+
+            Enquiry selectedEnquiry = pendingEnquiries.get(index);
+            System.out.print("Enter your reply: ");
+            String reply = scanner.nextLine().trim();
+
+            selectedEnquiry.setReply(reply);
+            boolean success = FileHandler.writeEnquiries(allEnquiries);
+
+            if (success) {
+                System.out.printf("Reply saved! Welcome %s.%n", user.getName());
+            } else {
+                System.out.println("Failed to save reply.");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input.");
+        }
+    }
+
+    private static void viewEnquiries(User user) {
+        List<Enquiry> allEnquiries = FileHandler.readEnquiries();
+        List<Enquiry> filteredEnquiries = new ArrayList<>();
+
+        // Testing, user see own, officer see assigned, manager see all
+        if (user instanceof Applicant) {
+            filteredEnquiries = allEnquiries.stream()
+                    .filter(e -> e.getName().equalsIgnoreCase(user.getName()))
+                    .collect(Collectors.toList());
+        } else if (user instanceof Officer) {
+            List<Project> projects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+            List<String> assignedProjects = projects.stream()
+                    .filter(p -> p.getOfficers().contains(user.getName()))
+                    .map(Project::getProjectName)
+                    .collect(Collectors.toList());
+
+            filteredEnquiries = allEnquiries.stream()
+                    .filter(e -> assignedProjects.contains(e.getProject()))
+                    .collect(Collectors.toList());
+        } else if (user instanceof Manager) {
+            filteredEnquiries = allEnquiries;
+        }
+
+        if (filteredEnquiries.isEmpty()) {
+            System.out.println("No enquiries found.");
+            return;
+        }
+
+        System.out.println("=============================================================");
+        System.out.println("Enquiries");
+        System.out.println("Project\t\tEnquiry\t\tReply");
+        for (Enquiry e : filteredEnquiries) {
+            System.out.printf("%s\t\t%s\t\t%s%n",
+                    e.getProject(),
+                    e.getEnquiry(),
+                    e.getReply().isEmpty() ? "[Pending]" : e.getReply());
+        }
+        System.out.println("=============================================================");
     }
 }
