@@ -1236,7 +1236,27 @@ public class SDDA_grp3 {
             }
         } while (officerSlots < 0 || officerSlots > 10);
 
-        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, new ArrayList<>(), false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        List<String> AssignedOfficers = new ArrayList<>();
+        List<Officer> allOfficers = FileHandler.readUsersFromCSV("OfficerList.csv", Officer.class);
+        List<String> validOfficerNames = allOfficers.stream()
+                .map(Officer::getName)
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < officerSlots; i++) {
+            while (true) {
+                System.out.printf("Officer #%d Name (Case Sensitive): ", i + 1);
+                String officerName = scanner.nextLine().trim();
+
+                if (validOfficerNames.contains(officerName)) {
+                    AssignedOfficers.add(officerName);
+                    break;
+                } else {
+                    System.out.println("Not a valid Officer Name, please check spelling and try again!");
+                }
+            }
+        }
+
+        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, AssignedOfficers, false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         projects.add(newProject);
 
         boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
