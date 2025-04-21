@@ -5,6 +5,8 @@ import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.StringJoiner;
 import java.util.function.Consumer;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 abstract class User {
     private String name;
@@ -480,6 +482,148 @@ class Enquiry {
 }
 
 public class SDDA_grp3 {
+	private static class BookableEntry {
+		Project project;
+		String type;
+		String name;
+
+		BookableEntry(Project project, String type, String name) {
+			this.project = project;
+			this.type = type;
+			this.name = name;
+		}
+	}
+	
+	private static void handleBookOwner(Officer officer, Scanner scanner) {
+		List<Project> allProjects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+		List<Project> assignedProjects = allProjects.stream()
+				.filter(p -> p.getOfficers().contains(officer.getName()))
+				.collect(Collectors.toList());
+
+		List<BookableEntry> bookableEntries = new ArrayList<>();
+		for (Project project : assignedProjects) {
+			List<String> type1Success = project.getType1OwnerSuccessful();
+			for (String name : type1Success) {
+				bookableEntries.add(new BookableEntry(project, "Type1", name));
+			}
+			List<String> type2Success = project.getType2OwnerSuccessful();
+			for (String name : type2Success) {
+				bookableEntries.add(new BookableEntry(project, "Type2", name));
+			}
+		}
+
+		if (bookableEntries.isEmpty()) {
+			System.out.println("No bookable owners found.");
+			return;
+		}
+
+		System.out.println("=============================================================");
+		System.out.println("Index\tProject Name\tType\tOwner");
+		int index = 1;
+		for (BookableEntry entry : bookableEntries) {
+			String type = entry.type.equals("Type1") ? entry.project.getType1() : entry.project.getType2();
+			System.out.printf("%d\t\t%s\t\t%s\t\t%s%n", index++, entry.project.getProjectName(), type, entry.name);
+		}
+		System.out.println("=============================================================");
+
+		System.out.print("Enter index of Owner to Book (enter c to cancel): ");
+		String input = scanner.nextLine().trim();
+		if (input.equalsIgnoreCase("c")) {
+			return;
+		}
+
+		try {
+			int selectedIndex = Integer.parseInt(input) - 1;
+			if (selectedIndex < 0 || selectedIndex >= bookableEntries.size()) {
+				System.out.println("Invalid index.");
+				return;
+			}
+
+			BookableEntry selectedEntry = bookableEntries.get(selectedIndex);
+			Project project = selectedEntry.project;
+			String type = selectedEntry.type;
+			String name = selectedEntry.name;
+
+			int unitCount;
+			if (type.equals("Type1")) {
+				unitCount = project.getNumUnitsType1();
+				if (unitCount <= 0) {
+					System.out.println("No available units for booking.");
+					return;
+				}
+				project.setNumUnitsType1(unitCount - 1);
+
+				List<String> type1Successful = new ArrayList<>(project.getType1OwnerSuccessful());
+				type1Successful.remove(name);
+				project.setType1OwnerSuccessful(type1Successful);
+
+				List<String> type1Booked = new ArrayList<>(project.getType1OwnerBooked());
+				type1Booked.add(name);
+				project.setType1OwnerBooked(type1Booked);
+			} else {
+				unitCount = project.getNumUnitsType2();
+				if (unitCount <= 0) {
+					System.out.println("No available units for booking.");
+					return;
+				}
+				project.setNumUnitsType2(unitCount - 1);
+
+				List<String> type2Successful = new ArrayList<>(project.getType2OwnerSuccessful());
+				type2Successful.remove(name);
+				project.setType2OwnerSuccessful(type2Successful);
+
+				List<String> type2Booked = new ArrayList<>(project.getType2OwnerBooked());
+				type2Booked.add(name);
+				project.setType2OwnerBooked(type2Booked);
+			}
+
+			boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", allProjects);
+			if (success) {
+				generateReceipt(selectedEntry);
+				System.out.printf("Success, generated receipt! Welcome %s.%n", officer.getName());
+			} else {
+				System.out.println("Failed to update project.");
+			}
+		} catch (NumberFormatException e) {
+			System.out.println("Invalid input.");
+		}
+	}
+
+	private static void generateReceipt(BookableEntry entry) {
+		List<Applicant> applicants = FileHandler.readUsersFromCSV("ApplicantList.csv", Applicant.class);
+		Applicant applicant = applicants.stream()
+				.filter(a -> a.getName().equals(entry.name))
+				.findFirst()
+				.orElse(null);
+
+		if (applicant == null) {
+			System.out.println("Applicant not found.");
+			return;
+		}
+
+		String projectName = entry.project.getProjectName();
+		String neighborhood = entry.project.getNeighborhood();
+		String flatType = entry.type.equals("Type1") ? entry.project.getType1() : entry.project.getType2();
+		int price = entry.type.equals("Type1") ? entry.project.getPriceType1() : entry.project.getPriceType2();
+
+		LocalDate currentDate = LocalDate.now();
+		String dateStr = currentDate.format(DateTimeFormatter.BASIC_ISO_DATE);
+		String fileName = String.format("receipt-%s-%s.txt", dateStr, applicant.getNric());
+
+		try (PrintWriter pw = new PrintWriter(fileName)) {
+			pw.printf("Applicant’s Name: %s%n", applicant.getName());
+			pw.printf("NRIC: %s%n", applicant.getNric());
+			pw.printf("Age: %d%n", applicant.getAge());
+			pw.printf("Marital status: %s%n", applicant.getMaritalStatus());
+			pw.printf("Flat type booked: %s%n", flatType);
+			pw.printf("Project name: %s%n", projectName);
+			pw.printf("Neighborhood: %s%n", neighborhood);
+			pw.printf("Flat type price: %d%n", price);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
     private static class EligibleEntry {
         Project project;
         String typeDesignation;
@@ -1286,6 +1430,7 @@ public class SDDA_grp3 {
                     System.out.println("3) View Eligible Projects"); //Testing
                     System.out.println("4) Reply to Enquiries (Assigned Projects)"); //Testing
                     System.out.println("5) View Enquiries"); //Testing
+					System.out.println("6) Book Owner");
                 } else if (user instanceof Applicant) {
                     System.out.println("3) View Eligible Projects"); // Testing
                     System.out.println("4) View Enquiries"); //Testing
@@ -1338,9 +1483,11 @@ public class SDDA_grp3 {
                     case "6":
                         if (user instanceof Manager) {
                             approveOwners((Manager) user, scanner);
-                        } else {
-                            System.out.println("Invalid choice.");
-                        }
+                        } else if (user instanceof Officer) {
+							handleBookOwner((Officer) user, scanner);
+						} else {
+							System.out.println("Invalid choice.");
+						}
                         break;
                     case "7": //Testing reply
                         if (user instanceof Manager) {

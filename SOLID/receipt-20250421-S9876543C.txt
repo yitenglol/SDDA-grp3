@@ -1,0 +1,8 @@
+Applicant’s Name: Grace
+NRIC: S9876543C
+Age: 37
+Marital status: Married
+Flat type booked: 3-Room
+Project name: Slay Town
+Neighborhood: Yishun
+Flat type price: 230000

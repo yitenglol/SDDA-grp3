@@ -1,0 +1,8 @@
+Applicant’s Name: Sarah
+NRIC: T7654321B
+Age: 40
+Marital status: Married
+Flat type booked: 3-Room
+Project name: Acacia Breeze
+Neighborhood: Yishun
+Flat type price: 450000
