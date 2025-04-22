@@ -1565,8 +1565,15 @@ public class SDDA_grp3 {
                         logout = true;
                         break;
                     case "2":
-                        System.out.print("Enter new password: ");
-                        String newPassword = scanner.nextLine().trim();
+                        String newPassword;
+                        do {
+                            System.out.print("Enter new password: ");
+                            newPassword = scanner.nextLine().trim();
+                            if (newPassword.isEmpty()) {
+                                System.out.println("Password cannot be empty! Please Enter a new password: ");
+                            }
+                        } while (newPassword.isEmpty());
+
                         user.setPassword(newPassword);
                         boolean success = PasswordChanger.changePassword(user);
                         if (success) {
