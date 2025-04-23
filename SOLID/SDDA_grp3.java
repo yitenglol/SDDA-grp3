@@ -1,3 +1,9 @@
+/**
+ * This java file contains different classes and methods for a Build-To-Order (BTO) Management System.
+ * It includes the user management, project management, and the handling of enquiries with other functions to complement the whole system.
+ */
+
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +14,9 @@ import java.util.function.Consumer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
+/**
+ * Abstract class representing the user in the System
+ */
 abstract class User {
     private String name;
     private String nric;
@@ -16,6 +25,16 @@ abstract class User {
     private String password;
     private String filter;
 
+    /**
+     * Instantiates a new User with specific details
+     *
+     * @param name          The name of the user
+     * @param nric          The NRIC of the user
+     * @param age           The age of the user
+     * @param maritalStatus The maritalStatus of the user
+     * @param password      The password of the user
+     * @param filter        The filter of the user
+     */
     public User(String name, String nric, int age, String maritalStatus, String password, String filter) {
         this.name = name;
         this.nric = nric;
@@ -25,51 +44,160 @@ abstract class User {
         this.filter = filter;
     }
 
+    /**
+     * Gets csv filename associated with the type of user.
+     *
+     * @return the csv filename
+     */
     public abstract String getCSVFilename();
 
+    /**
+     * Gets name.
+     *
+     * @return the name
+     */
     public String getName() { return name; }
+
+    /**
+     * Gets NRIC.
+     *
+     * @return the nric
+     */
     public String getNric() { return nric; }
+
+    /**
+     * Gets age.
+     *
+     * @return the age
+     */
     public int getAge() { return age; }
+
+    /**
+     * Gets marital status.
+     *
+     * @return the marital status
+     */
     public String getMaritalStatus() { return maritalStatus; }
+
+    /**
+     * Gets password.
+     *
+     * @return the password
+     */
     public String getPassword() { return password; }
+
+    /**
+     * Gets filter.
+     *
+     * @return the filter
+     */
     public String getFilter() { return filter; }
+
+    /**
+     * Sets password.
+     *
+     * @param password the password
+     */
     public void setPassword(String password) { this.password = password; }
+
+    /**
+     * Sets filter.
+     *
+     * @param filter the filter
+     */
     public void setFilter(String filter) { this.filter = filter; }
 }
 
+/**
+ * Class representing applicant type user in the system
+ */
 class Applicant extends User {
+    /**
+     * Instantiates a new applicant with specific details
+     *
+     * @param name          The name of the applicant
+     * @param nric          The NRIC of the applicant
+     * @param age           The age of the applicant
+     * @param maritalStatus The marital status of the applicant
+     * @param password      The password of the applicant
+     * @param filter        The filter of the applicant
+     */
     public Applicant(String name, String nric, int age, String maritalStatus, String password, String filter) {
         super(name, nric, age, maritalStatus, password, filter);
     }
 
+    /**
+     * Gets csv filename.
+     *
+     * @return the csv filename
+     */
     @Override
     public String getCSVFilename() {
         return "ApplicantList.csv";
     }
 }
 
+/**
+ * Class representing officer type user in the system
+ */
 class Officer extends User {
+    /**
+     * Instantiates a new Officer.
+     *
+     * @param name          The name of the officer
+     * @param nric          The NRIC of the officer
+     * @param age           The age of the officer
+     * @param maritalStatus The marital status of the officer
+     * @param password      The password of the officer
+     * @param filter        The filter of the officer
+     */
     public Officer(String name, String nric, int age, String maritalStatus, String password, String filter) {
         super(name, nric, age, maritalStatus, password, filter);
     }
 
+    /**
+     * Gets csv filename.
+     *
+     * @return the csv filename
+     */
     @Override
     public String getCSVFilename() {
         return "OfficerList.csv";
     }
 }
 
+/**
+ * Class representing Manager type user in the system
+ */
 class Manager extends User {
+    /**
+     * Instantiates a new Manager.
+     *
+     * @param name          The name of the Manager
+     * @param nric          The NRIC of the Manager
+     * @param age           The age of the Manager
+     * @param maritalStatus The marital status of the Manager
+     * @param password      The password of the Manager
+     * @param filter        The filter of the Manager
+     */
     public Manager(String name, String nric, int age, String maritalStatus, String password, String filter) {
         super(name, nric, age, maritalStatus, password, filter);
     }
 
+    /**
+     * Gets csv filename.
+     *
+     * @return the csv filename
+     */
     @Override
     public String getCSVFilename() {
         return "ManagerList.csv";
     }
 }
 
+/**
+ * Class representing project in the system
+ */
 class Project {
     private String projectName;
     private String neighborhood;
@@ -98,6 +226,36 @@ class Project {
     private List<String> type2OwnerBooked;
     private List<String> type2WithdrawalPending;
 
+    /**
+     * Instantiates a new Project.
+     *
+     * @param projectName            The name of the project.t
+     * @param neighborhood           The neighborhood where project is located.
+     * @param type1                  The type of the first unit.
+     * @param numUnitsType1          The number of type 1 units.
+     * @param priceType1             The price for type 1 unit.
+     * @param type2                  The type of the second unit.
+     * @param numUnitsType2          The number of type 2 units.
+     * @param priceType2             The price for type 1 units.
+     * @param openingDate            The opening date of the project.
+     * @param closingDate            The closing date of the project.
+     * @param managerName            The manager name.
+     * @param officerSlots           The number of officer assigned to the project.
+     * @param officers               The officers.
+     * @param visibility             Visibility status of the project.
+     * @param officerPending         The list of officers pending assignment to the project.
+     * @param officerUnsuccessful    The list of officers who were unsuccessful in their application for the project.
+     * @param type1OwnerPending      The list of owners pending approval for type 1 units.
+     * @param type1OwnerUnsuccessful The list of owners who were unsuccessful in their application for type 1 units.
+     * @param type1OwnerSuccessful   The list of owners who were successful in their application for type 1 units.
+     * @param type1OwnerBooked       The list of owners who have applied type 1 units.
+     * @param type1WithdrawalPending The list of owners who have requested withdrawal from type 1 units.
+     * @param type2OwnerPending      The list of owners pending approval for type 2 units.
+     * @param type2OwnerUnsuccessful The list of owners who were unsuccessful in their application for type 2 units.
+     * @param type2OwnerSuccessful   The list of owners who were successful in their application for type 2 units.
+     * @param type2OwnerBooked       The list of owners who have applied type 2 units.
+     * @param type2WithdrawalPending The list of owners who have requested withdrawal from type 2 units.
+     */
     public Project(String projectName, String neighborhood, String type1, int numUnitsType1, int priceType1,
                    String type2, int numUnitsType2, int priceType2, String openingDate, String closingDate,
                    String managerName, int officerSlots, List<String> officers, boolean visibility,
@@ -135,57 +293,348 @@ class Project {
         this.type2WithdrawalPending = type2WithdrawalPending != null ? new ArrayList<>(type2WithdrawalPending) : new ArrayList<>();
     }
 
+    /**
+     * Gets project name.
+     *
+     * @return the project name
+     */
     public String getProjectName() { return projectName; }
+
+    /**
+     * Gets neighborhood.
+     *
+     * @return the neighborhood
+     */
     public String getNeighborhood() { return neighborhood; }
+
+    /**
+     * Gets type 1.
+     *
+     * @return the type 1
+     */
     public String getType1() { return type1; }
+
+    /**
+     * Gets num units type 1.
+     *
+     * @return the num units type 1
+     */
     public int getNumUnitsType1() { return numUnitsType1; }
+
+    /**
+     * Gets price type 1.
+     *
+     * @return the price type 1
+     */
     public int getPriceType1() { return priceType1; }
+
+    /**
+     * Gets type 2.
+     *
+     * @return the type 2
+     */
     public String getType2() { return type2; }
+
+    /**
+     * Gets num units type 2.
+     *
+     * @return the num units type 2
+     */
     public int getNumUnitsType2() { return numUnitsType2; }
+
+    /**
+     * Gets price type 2.
+     *
+     * @return the price type 2
+     */
     public int getPriceType2() { return priceType2; }
+
+    /**
+     * Gets opening date.
+     *
+     * @return the opening date
+     */
     public String getOpeningDate() { return openingDate; }
+
+    /**
+     * Gets closing date.
+     *
+     * @return the closing date
+     */
     public String getClosingDate() { return closingDate; }
+
+    /**
+     * Gets manager name.
+     *
+     * @return the manager name
+     */
     public String getManagerName() { return managerName; }
+
+    /**
+     * Gets officer slots.
+     *
+     * @return the officer slots
+     */
     public int getOfficerSlots() { return officerSlots; }
+
+    /**
+     * Gets officers.
+     *
+     * @return the officers
+     */
     public List<String> getOfficers() { return new ArrayList<>(officers); }
+
+    /**
+     * Gets visibility.
+     *
+     * @return the visibility
+     */
     public boolean getVisibility() { return visibility; }
+
+    /**
+     * Sets visibility.
+     *
+     * @param visibility the visibility
+     */
     public void setVisibility(boolean visibility) { this.visibility = visibility; }
+
+    /**
+     * Gets officer pending.
+     *
+     * @return the officer pending
+     */
     public List<String> getOfficerPending() { return new ArrayList<>(officerPending); }
+
+    /**
+     * Gets officer unsuccessful.
+     *
+     * @return the officer unsuccessful
+     */
     public List<String> getOfficerUnsuccessful() { return new ArrayList<>(officerUnsuccessful); }
+
+    /**
+     * Gets type 1 owner pending.
+     *
+     * @return the type 1 owner pending
+     */
     public List<String> getType1OwnerPending() { return new ArrayList<>(type1OwnerPending); }
+
+    /**
+     * Gets type 1 owner unsuccessful.
+     *
+     * @return the type 1 owner unsuccessful
+     */
     public List<String> getType1OwnerUnsuccessful() { return new ArrayList<>(type1OwnerUnsuccessful); }
+
+    /**
+     * Gets type 1 owner successful.
+     *
+     * @return the type 1 owner successful
+     */
     public List<String> getType1OwnerSuccessful() { return new ArrayList<>(type1OwnerSuccessful); }
+
+    /**
+     * Gets type 1 owner booked.
+     *
+     * @return the type 1 owner booked
+     */
     public List<String> getType1OwnerBooked() { return new ArrayList<>(type1OwnerBooked); }
-	public List<String> getType1WithdrawalPending() { return new ArrayList<>(type1WithdrawalPending); }
+
+    /**
+     * Gets type 1 withdrawal pending.
+     *
+     * @return the type 1 withdrawal pending
+     */
+    public List<String> getType1WithdrawalPending() { return new ArrayList<>(type1WithdrawalPending); }
+
+    /**
+     * Gets type 2 owner pending.
+     *
+     * @return the type 2 owner pending
+     */
     public List<String> getType2OwnerPending() { return new ArrayList<>(type2OwnerPending); }
+
+    /**
+     * Gets type 2 owner unsuccessful.
+     *
+     * @return the type 2 owner unsuccessful
+     */
     public List<String> getType2OwnerUnsuccessful() { return new ArrayList<>(type2OwnerUnsuccessful); }
+
+    /**
+     * Gets type 2 owner successful.
+     *
+     * @return the type 2 owner successful
+     */
     public List<String> getType2OwnerSuccessful() { return new ArrayList<>(type2OwnerSuccessful); }
+
+    /**
+     * Gets type 2 owner booked.
+     *
+     * @return the type 2 owner booked
+     */
     public List<String> getType2OwnerBooked() { return new ArrayList<>(type2OwnerBooked); }
+
+    /**
+     * Gets type 2 withdrawal pending.
+     *
+     * @return the type 2 withdrawal pending
+     */
     public List<String> getType2WithdrawalPending() { return new ArrayList<>(type2WithdrawalPending); }
 
+    /**
+     * Sets neighborhood.
+     *
+     * @param neighborhood the neighborhood
+     */
     public void setNeighborhood(String neighborhood) { this.neighborhood = neighborhood; }
+
+    /**
+     * Sets num units type 1.
+     *
+     * @param numUnitsType1 the num units type 1
+     */
     public void setNumUnitsType1(int numUnitsType1) { this.numUnitsType1 = numUnitsType1; }
+
+    /**
+     * Sets price type 1.
+     *
+     * @param priceType1 the price type 1
+     */
     public void setPriceType1(int priceType1) { this.priceType1 = priceType1; }
+
+    /**
+     * Sets num units type 2.
+     *
+     * @param numUnitsType2 the num units type 2
+     */
     public void setNumUnitsType2(int numUnitsType2) { this.numUnitsType2 = numUnitsType2; }
+
+    /**
+     * Sets price type 2.
+     *
+     * @param priceType2 the price type 2
+     */
     public void setPriceType2(int priceType2) { this.priceType2 = priceType2; }
+
+    /**
+     * Sets opening date.
+     *
+     * @param openingDate the opening date
+     */
     public void setOpeningDate(String openingDate) { this.openingDate = openingDate; }
+
+    /**
+     * Sets closing date.
+     *
+     * @param closingDate the closing date
+     */
     public void setClosingDate(String closingDate) { this.closingDate = closingDate; }
+
+    /**
+     * Sets officer slots.
+     *
+     * @param officerSlots the officer slots
+     */
     public void setOfficerSlots(int officerSlots) { this.officerSlots = officerSlots; }
+
+    /**
+     * Sets officer pending.
+     *
+     * @param officerPending the officer pending
+     */
     public void setOfficerPending(List<String> officerPending) { this.officerPending = new ArrayList<>(officerPending); }
+
+    /**
+     * Sets officer unsuccessful.
+     *
+     * @param officerUnsuccessful the officer unsuccessful
+     */
     public void setOfficerUnsuccessful(List<String> officerUnsuccessful) { this.officerUnsuccessful = new ArrayList<>(officerUnsuccessful); }
+
+    /**
+     * Sets type 1 owner pending.
+     *
+     * @param type1OwnerPending the type 1 owner pending
+     */
     public void setType1OwnerPending(List<String> type1OwnerPending) { this.type1OwnerPending = new ArrayList<>(type1OwnerPending); }
+
+    /**
+     * Sets type 1 owner unsuccessful.
+     *
+     * @param type1OwnerUnsuccessful the type 1 owner unsuccessful
+     */
     public void setType1OwnerUnsuccessful(List<String> type1OwnerUnsuccessful) { this.type1OwnerUnsuccessful = new ArrayList<>(type1OwnerUnsuccessful); }
+
+    /**
+     * Sets type 1 owner successful.
+     *
+     * @param type1OwnerSuccessful the type 1 owner successful
+     */
     public void setType1OwnerSuccessful(List<String> type1OwnerSuccessful) { this.type1OwnerSuccessful = new ArrayList<>(type1OwnerSuccessful); }
+
+    /**
+     * Sets type 1 owner booked.
+     *
+     * @param type1OwnerBooked the type 1 owner booked
+     */
     public void setType1OwnerBooked(List<String> type1OwnerBooked) { this.type1OwnerBooked = new ArrayList<>(type1OwnerBooked); }
-	public void setType1WithdrawalPending(List<String> type1WithdrawalPending) { this.type1WithdrawalPending = new ArrayList<>(type1WithdrawalPending); }
+
+    /**
+     * Sets type 1 withdrawal pending.
+     *
+     * @param type1WithdrawalPending the type 1 withdrawal pending
+     */
+    public void setType1WithdrawalPending(List<String> type1WithdrawalPending) { this.type1WithdrawalPending = new ArrayList<>(type1WithdrawalPending); }
+
+    /**
+     * Sets type 2 owner pending.
+     *
+     * @param type2OwnerPending the type 2 owner pending
+     */
     public void setType2OwnerPending(List<String> type2OwnerPending) { this.type2OwnerPending = new ArrayList<>(type2OwnerPending); }
+
+    /**
+     * Sets type 2 owner unsuccessful.
+     *
+     * @param type2OwnerUnsuccessful the type 2 owner unsuccessful
+     */
     public void setType2OwnerUnsuccessful(List<String> type2OwnerUnsuccessful) { this.type2OwnerUnsuccessful = new ArrayList<>(type2OwnerUnsuccessful); }
+
+    /**
+     * Sets type 2 owner successful.
+     *
+     * @param type2OwnerSuccessful the type 2 owner successful
+     */
     public void setType2OwnerSuccessful(List<String> type2OwnerSuccessful) { this.type2OwnerSuccessful = new ArrayList<>(type2OwnerSuccessful); }
+
+    /**
+     * Sets type 2 owner booked.
+     *
+     * @param type2OwnerBooked the type 2 owner booked
+     */
     public void setType2OwnerBooked(List<String> type2OwnerBooked) { this.type2OwnerBooked = new ArrayList<>(type2OwnerBooked); }
+
+    /**
+     * Sets type 2 withdrawal pending.
+     *
+     * @param type2WithdrawalPending the type 2 withdrawal pending
+     */
     public void setType2WithdrawalPending(List<String> type2WithdrawalPending) { this.type2WithdrawalPending = new ArrayList<>(type2WithdrawalPending); }
 }
 
+/**
+ * Class representing FileHandler in the system
+ */
 class FileHandler {
+    /**
+     * Read users from csv list.
+     *
+     * @param <T>       the type parameter
+     * @param filename  the filename of the csv
+     * @param userClass the user class
+     * @return the list
+     */
     public static <T extends User> List<T> readUsersFromCSV(String filename, Class<T> userClass) {
         List<T> users = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
@@ -217,6 +666,13 @@ class FileHandler {
         return users;
     }
 
+    /**
+     * Write users to csv boolean.
+     *
+     * @param filename the filename
+     * @param users    the users
+     * @return the boolean
+     */
     public static boolean writeUsersToCSV(String filename, List<? extends User> users) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
             pw.println("Name,NRIC,Age,Marital Status,Password,Filter");
@@ -236,6 +692,12 @@ class FileHandler {
         }
     }
 
+    /**
+     * Read projects from csv list.
+     *
+     * @param filename the filename of the csv
+     * @return the list
+     */
     public static List<Project> readProjectsFromCSV(String filename) {
         List<Project> projects = new ArrayList<>();
         File file = new File(filename);
@@ -304,6 +766,15 @@ class FileHandler {
         return projects;
     }
 
+/**
+ * Parses the CSV list from a specified index from a list of strings
+ * Retreive the string at the given index from the given fields list
+ *
+ * @param fields the list of strings to parse
+ * @param index the index used to parse the CSV list
+ * @return list the list of trimmed strings obtained from spliting the index from the given
+ * 	   field or an empty list if the field is null,empty or invalid
+ */
     private static List<String> parseCommaSeparatedList(List<String> fields, int index) {
         List<String> list = new ArrayList<>();
         if (index < fields.size()) {
@@ -318,6 +789,13 @@ class FileHandler {
         return list;
     }
 
+    /**
+     * Write projects to csv boolean.
+     *
+     * @param filename the filename
+     * @param projects the projects
+     * @return the boolean
+     */
     public static boolean writeProjectsToCSV(String filename, List<Project> projects) {
         try (PrintWriter pw = new PrintWriter(new FileWriter(filename))) {
             pw.println("Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility,OfficerPending,OfficerUnsuccessful,Type1OwnerPending,Type1OwnerUnsuccessful,Type1OwnerSuccessful,Type1OwnerBooked,Type1WithdrawalPending,Type2OwnerPending,Type2OwnerUnsuccessful,Type2OwnerSuccessful,Type2OwnerBooked,Type2WithdrawalPending");
@@ -371,6 +849,12 @@ class FileHandler {
         }
     }
 
+/**
+* Converts a list of strings into a single CSV string.
+*
+* @param list
+* @return a CSV-formated string in double quotes if it contains commas
+*/
     private static String getCSVString(List<String> list) {
         String str = String.join(",", list);
         if (str.contains(",")) {
@@ -379,7 +863,12 @@ class FileHandler {
         return str;
     }
 
-    // Read all enquiries Testing
+    /**
+     * Read enquiries list.
+     *
+     * @return the list
+     */
+// Read all enquiries Testing
     public static List<Enquiry> readEnquiries() {
         List<Enquiry> enquiries = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader("EnquiryList.csv"))) {
@@ -404,7 +893,13 @@ class FileHandler {
         return enquiries;
     }
 
-    // Write updated enquiries
+    /**
+     * Write enquiries boolean.
+     *
+     * @param enquiries the enquiries
+     * @return the boolean
+     */
+// Write updated enquiries
     public static boolean writeEnquiries(List<Enquiry> enquiries) {
         try (PrintWriter pw = new PrintWriter("EnquiryList.csv")) {
             pw.println("Name,Project,String,Reply");
@@ -420,13 +915,31 @@ class FileHandler {
     }
 }
 
+/**
+ * Class representing NRICValidator in the system
+ */
 class NRICValidator {
+    /**
+     * Is valid boolean.
+     *
+     * @param nric the nric
+     * @return the boolean
+     */
     public static boolean isValid(String nric) {
         return nric != null && nric.matches("^[STst]\\d{7}[A-Za-z]$");
     }
 }
 
+/**
+ * Class representing LoginManager in the system
+ */
 class LoginManager {
+    /**
+     * Find user by nric user.
+     *
+     * @param nric the nric
+     * @return the user
+     */
     public static User findUserByNRIC(String nric) {
         List<Applicant> applicants = FileHandler.readUsersFromCSV("ApplicantList.csv", Applicant.class);
         for (Applicant a : applicants) {
@@ -447,7 +960,16 @@ class LoginManager {
     }
 }
 
+/**
+ * Class representing changing password in the system
+ */
 class PasswordChanger {
+    /**
+     * Change password boolean.
+     *
+     * @param user the user
+     * @return the boolean
+     */
     public static boolean changePassword(User user) {
         String csvFilename = user.getCSVFilename();
         List<? extends User> users = FileHandler.readUsersFromCSV(csvFilename, user.getClass());
@@ -464,12 +986,23 @@ class PasswordChanger {
     }
 }
 
+/**
+ * Class representing the enquiry made in the system
+ */
 class Enquiry {
     private String name;
     private String project;
     private String enquiry;
     private String reply;
 
+    /**
+     * Instantiates a new Enquiry.
+     *
+     * @param name    Who is making the enquiry
+     * @param project The name of the project that the enquiry is made for
+     * @param enquiry What is the enquiry in question
+     * @param reply   Reply to the enquiry
+     */
     public Enquiry(String name, String project, String enquiry, String reply) {
         this.name = name;
         this.project = project;
@@ -477,24 +1010,67 @@ class Enquiry {
         this.reply = reply;
     }
 
+    /**
+     * Gets name.
+     *
+     * @return the name
+     */
     public String getName() { return name; }
+
+    /**
+     * Gets project.
+     *
+     * @return the project
+     */
     public String getProject() { return project; }
+
+    /**
+     * Gets enquiry.
+     *
+     * @return the enquiry
+     */
     public String getEnquiry() { return enquiry; }
+
+    /**
+     * Gets reply.
+     *
+     * @return the reply
+     */
     public String getReply() { return reply; }
 
-    // Testing
+    /**
+     * Sets reply.
+     *
+     * @param reply the reply
+     */
+// Testing
     public void setReply(String reply) {
         this.reply = reply;
     }
 }
 
+/**
+ * Main system class in the system that contains user interaction and business logic
+ */
 public class SDDA_grp3 {
 	private static class BookableEntry {
-		Project project;
-		String type;
-		String name;
-
-		BookableEntry(Project project, String type, String name) {
+        /**
+         * Project containing bookable flat.
+         */
+        Project project;
+        /**
+         * The flat type.
+         */
+        String type;
+        String name;
+        /**
+         * Instantiates a new Bookable entry.
+         *
+         * @param project Project containing bookable flat
+         * @param type    Flat type
+         * @param name    Name of flat applicant
+         */
+        BookableEntry(Project project, String type, String name) {
 			this.project = project;
 			this.type = type;
 			this.name = name;
@@ -632,10 +1208,26 @@ public class SDDA_grp3 {
 	}
 	
     private static class EligibleEntry {
+        /**
+         * The eligible project
+         */
         Project project;
+        /**
+         * The flat type designation
+         */
         String typeDesignation;
+        /**
+         * Display string for the project
+         */
         String displayString;
 
+        /**
+         * Instantiates a new Eligible entry.
+         *
+         * @param project         Eligible Project
+         * @param typeDesignation Flat type
+         * @param displayString   Formatted display information
+         */
         EligibleEntry(Project project, String typeDesignation, String displayString) {
             this.project = project;
             this.typeDesignation = typeDesignation;
@@ -644,10 +1236,26 @@ public class SDDA_grp3 {
     }
 
     private static class PendingEntry {
+        /**
+         * Project with plending application
+         */
         Project project;
+        /**
+         * Flat type
+         */
         String type;
+        /**
+         * Applicant name
+         */
         String ownerName;
 
+        /**
+         * Instantiates a new Pending entry.
+         *
+         * @param project   Project with pending application
+         * @param type      Flat type
+         * @param ownerName Applicants name
+         */
         PendingEntry(Project project, String type, String ownerName) {
             this.project = project;
             this.type = type;
@@ -657,11 +1265,27 @@ public class SDDA_grp3 {
 	
 	
 	private static class WithdrawalEntry {
-		Project project;
-		String type;
-		String name;
+        /**
+         * Project for withdrawel
+         */
+        Project project;
+        /**
+         * Flat type
+         */
+        String type;
+        /**
+         * Applicant's name
+         */
+        String name;
 
-		WithdrawalEntry(Project project, String type, String name) {
+        /**
+         * Instantiates a new Withdrawal entry.
+         *
+         * @param project Project for withdrrawel
+         * @param type    Flat type
+         * @param name    Applicant's name
+         */
+        WithdrawalEntry(Project project, String type, String name) {
 			this.project = project;
 			this.type = type;
 			this.name = name;
@@ -1236,7 +1860,27 @@ public class SDDA_grp3 {
             }
         } while (officerSlots < 0 || officerSlots > 10);
 
-        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, new ArrayList<>(), false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        List<String> AssignedOfficers = new ArrayList<>();
+        List<Officer> allOfficers = FileHandler.readUsersFromCSV("OfficerList.csv", Officer.class);
+        List<String> validOfficerNames = allOfficers.stream()
+                .map(Officer::getName)
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < officerSlots; i++) {
+            while (true) {
+                System.out.printf("Officer #%d Name (Case Sensitive): ", i + 1);
+                String officerName = scanner.nextLine().trim();
+
+                if (validOfficerNames.contains(officerName)) {
+                    AssignedOfficers.add(officerName);
+                    break;
+                } else {
+                    System.out.println("Not a valid Officer Name, please check spelling and try again!");
+                }
+            }
+        }
+
+        Project newProject = new Project(projectName, neighborhood, "2-Room", numUnitsType1, priceType1, "3-Room", numUnitsType2, priceType2, openingDate, closingDate, manager.getName(), officerSlots, AssignedOfficers, false, new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         projects.add(newProject);
 
         boolean success = FileHandler.writeProjectsToCSV("ProjectList.csv", projects);
@@ -1479,7 +2123,6 @@ public class SDDA_grp3 {
             System.out.println("Invalid input. Please enter a number.");
         }
     }
-
     public static void main(String[] args) {
         File enquiryFile = new File("EnquiryList.csv");
         if (!enquiryFile.exists()) {
@@ -1545,8 +2188,15 @@ public class SDDA_grp3 {
                         logout = true;
                         break;
                     case "2":
-                        System.out.print("Enter new password: ");
-                        String newPassword = scanner.nextLine().trim();
+                        String newPassword;
+                        do {
+                            System.out.print("Enter new password: ");
+                            newPassword = scanner.nextLine().trim();
+                            if (newPassword.isEmpty()) {
+                                System.out.println("Password cannot be empty! Please Enter a new password: ");
+                            }
+                        } while (newPassword.isEmpty());
+
                         user.setPassword(newPassword);
                         boolean success = PasswordChanger.changePassword(user);
                         if (success) {
