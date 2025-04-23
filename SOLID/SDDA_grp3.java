@@ -766,6 +766,15 @@ class FileHandler {
         return projects;
     }
 
+/**
+ * Parses the CSV list from a specified index from a list of strings
+ * Retreive the string at the given index from the given fields list
+ *
+ * @param fields the list of strings to parse
+ * @param index the index used to parse the CSV list
+ * @return list the list of trimmed strings obtained from spliting the index from the given
+ * 	   field or an empty list if the field is null,empty or invalid
+ */
     private static List<String> parseCommaSeparatedList(List<String> fields, int index) {
         List<String> list = new ArrayList<>();
         if (index < fields.size()) {
@@ -840,6 +849,12 @@ class FileHandler {
         }
     }
 
+/**
+* Converts a list of strings into a single CSV string.
+*
+* @param list
+* @return a CSV-formated string in double quotes if it contains commas
+*/
     private static String getCSVString(List<String> list) {
         String str = String.join(",", list);
         if (str.contains(",")) {
