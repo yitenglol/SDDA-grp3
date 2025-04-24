@@ -1,6 +1,6 @@
-Name,NRIC,Age,Marital Status,Password
-John,S1234567A,35,Single,password
-Sarah,T7654321B,40,Married,password
-Grace,S9876543C,37,Married,password
-James,T2345678D,30,Married,password
-Rachel,S3456789E,25,Single,password
+Name,NRIC,Age,Marital Status,Password,Filter
+John,S1234567A,35,Single,password,None
+Sarah,T7654321B,40,Married,password,None
+Grace,S9876543C,37,Married,password,None
+James,T2345678D,30,Married,password,None
+Rachel,S3456789E,25,Single,password,None
