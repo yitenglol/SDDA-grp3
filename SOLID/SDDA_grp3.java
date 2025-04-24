@@ -13,6 +13,9 @@ import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Base64;
+
+
 
 /**
  * Abstract class representing the user in the System
@@ -915,6 +918,8 @@ class FileHandler {
     }
 }
 
+
+
 /**
  * Class representing NRICValidator in the system
  */
@@ -1053,6 +1058,127 @@ class Enquiry {
  * Main system class in the system that contains user interaction and business logic
  */
 public class SDDA_grp3 {
+	
+	    private static boolean isNameExists(String name) {
+        List<Applicant> applicants = FileHandler.readUsersFromCSV("ApplicantList.csv", Applicant.class);
+        List<Officer> officers = FileHandler.readUsersFromCSV("OfficerList.csv", Officer.class);
+        List<Manager> managers = FileHandler.readUsersFromCSV("ManagerList.csv", Manager.class);
+
+        return applicants.stream().anyMatch(a -> a.getName().equalsIgnoreCase(name)) ||
+               officers.stream().anyMatch(o -> o.getName().equalsIgnoreCase(name)) ||
+               managers.stream().anyMatch(m -> m.getName().equalsIgnoreCase(name));
+    }
+
+    private static boolean isNricExists(String nric) {
+        List<Applicant> applicants = FileHandler.readUsersFromCSV("ApplicantList.csv", Applicant.class);
+        List<Officer> officers = FileHandler.readUsersFromCSV("OfficerList.csv", Officer.class);
+        List<Manager> managers = FileHandler.readUsersFromCSV("ManagerList.csv", Manager.class);
+
+        return applicants.stream().anyMatch(a -> a.getNric().equalsIgnoreCase(nric)) ||
+               officers.stream().anyMatch(o -> o.getNric().equalsIgnoreCase(nric)) ||
+               managers.stream().anyMatch(m -> m.getNric().equalsIgnoreCase(nric));
+    }
+
+    private static void createUserAccount(Scanner scanner) {
+        System.out.print("Select User Type (m for manager, a for applicant, o for officer): ");
+        String userType = scanner.nextLine().trim().toLowerCase();
+        if (!userType.equals("m") && !userType.equals("a") && !userType.equals("o")) {
+            System.out.println("Invalid user type.");
+            return;
+        }
+
+        String name;
+        boolean nameExists;
+        do {
+            System.out.print("Enter Name: ");
+            name = scanner.nextLine().trim();
+            nameExists = isNameExists(name);
+            if (nameExists) {
+                System.out.println("Error! " + name + " already registered");
+            }
+        } while (nameExists);
+
+        String nric;
+        boolean nricValid;
+        do {
+            System.out.print("Enter NRIC: ");
+            nric = scanner.nextLine().trim();
+            nricValid = NRICValidator.isValid(nric) && !isNricExists(nric);
+            if (!NRICValidator.isValid(nric)) {
+                System.out.println("Invalid NRIC format.");
+            } else if (isNricExists(nric)) {
+                System.out.println("Error! NRIC already registered");
+            }
+        } while (!nricValid);
+
+        int age;
+        do {
+            System.out.print("Enter Age: ");
+            while (!scanner.hasNextInt()) {
+                System.out.println("Invalid input. Enter a number.");
+                scanner.next();
+            }
+            age = scanner.nextInt();
+            scanner.nextLine();
+            if (age < 0) {
+                System.out.println("Error! Age cannot be negative");
+            }
+        } while (age < 0);
+
+        String maritalStatus;
+        do {
+            System.out.print("Enter Marital Status (m for married, s for single): ");
+            String input = scanner.nextLine().trim().toLowerCase();
+            if (input.equals("m")) {
+                maritalStatus = "Married";
+                break;
+            } else if (input.equals("s")) {
+                maritalStatus = "Single";
+                break;
+            } else {
+                System.out.println("Invalid option.");
+            }
+        } while (true);
+
+        String password;
+        do {
+            System.out.print("Enter password: ");
+            password = scanner.nextLine().trim();
+            if (password.isEmpty()) {
+                System.out.println("Password cannot be empty.");
+            }
+        } while (password.isEmpty());
+        String encodedPassword = Base64.getEncoder().encodeToString(password.getBytes());
+
+        User newUser;
+        switch (userType) {
+            case "m":
+                newUser = new Manager(name, nric, age, maritalStatus, encodedPassword, "None");
+                break;
+            case "o":
+                newUser = new Officer(name, nric, age, maritalStatus, encodedPassword, "None");
+                break;
+            case "a":
+                newUser = new Applicant(name, nric, age, maritalStatus, encodedPassword, "None");
+                break;
+            default:
+                return;
+        }
+
+        String filename = newUser.getCSVFilename();
+        List<? extends User> users = FileHandler.readUsersFromCSV(filename, newUser.getClass());
+        List<Object> updatedUsers = new ArrayList<>(users);
+        updatedUsers.add(newUser);
+        boolean success = FileHandler.writeUsersToCSV(filename, updatedUsers.stream()
+                .map(u -> (User) u)
+                .collect(Collectors.toList()));
+
+        if (success) {
+            System.out.println("Success! Account Created");
+        } else {
+            System.out.println("Error creating account.");
+        }
+    }
 	
 	private static void changeFilter(User user, Scanner scanner) {
         System.out.printf("Current filter: %s%n", user.getFilter());
@@ -2189,7 +2315,7 @@ public class SDDA_grp3 {
             System.out.println("Invalid input. Please enter a number.");
         }
     }
-    public static void main(String[] args) {
+       public static void main(String[] args) {
         File enquiryFile = new File("EnquiryList.csv");
         if (!enquiryFile.exists()) {
             try (PrintWriter pw = new PrintWriter(enquiryFile)) {
@@ -2201,11 +2327,14 @@ public class SDDA_grp3 {
         Scanner scanner = new Scanner(System.in);
         while (true) {
             System.out.println("Welcome to SDDA-grp3 system.");
-            System.out.print("Login (enter q to quit): ");
+            System.out.print("Login (enter q to quit, c for create): ");
             String nricInput = scanner.nextLine().trim();
             if (nricInput.equalsIgnoreCase("q")) {
                 System.out.println("Goodbye!");
                 break;
+            } else if (nricInput.equalsIgnoreCase("c")) {
+                createUserAccount(scanner);
+                continue;
             }
             if (!NRICValidator.isValid(nricInput)) {
                 System.out.println("Invalid format!");
@@ -2218,7 +2347,8 @@ public class SDDA_grp3 {
             }
             System.out.print("Password: ");
             String passwordInput = scanner.nextLine().trim();
-            if (!user.getPassword().equals(passwordInput)) {
+            String encodedInput = Base64.getEncoder().encodeToString(passwordInput.getBytes());
+            if (!user.getPassword().equals(encodedInput)) {
                 System.out.println("Wrong password!");
                 continue;
             }
@@ -2257,7 +2387,7 @@ public class SDDA_grp3 {
                     case "1":
                         logout = true;
                         break;
-                    case "2":
+					case "2":
                         String newPassword;
                         do {
                             System.out.print("Enter new password: ");
@@ -2266,8 +2396,8 @@ public class SDDA_grp3 {
                                 System.out.println("Password cannot be empty! Please Enter a new password: ");
                             }
                         } while (newPassword.isEmpty());
-
-                        user.setPassword(newPassword);
+                        String encodedNewPassword = Base64.getEncoder().encodeToString(newPassword.getBytes());
+                        user.setPassword(encodedNewPassword);
                         boolean success = PasswordChanger.changePassword(user);
                         if (success) {
                             System.out.printf("Password change success! Welcome %s, %d, %s %s.%n",
