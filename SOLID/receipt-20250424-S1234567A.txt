@@ -1,0 +1,8 @@
+Applicant’s Name: John
+NRIC: S1234567A
+Age: 35
+Marital status: Single
+Flat type booked: 2-Room
+Project name: Slay Town
+Neighborhood: Hougang
+Flat type price: 350000
