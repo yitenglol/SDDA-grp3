@@ -1,3 +1,4 @@
 Project Name,Neighborhood,Type 1,Number of units for Type 1,Selling price for Type 1,Type 2,Number of units for Type 2,Selling price for Type 2,Application opening date,Application closing date,Manager,Officer Slot,Officer,Visibility,OfficerPending,OfficerUnsuccessful,Type1OwnerPending,Type1OwnerUnsuccessful,Type1OwnerSuccessful,Type1OwnerBooked,Type1WithdrawalPending,Type2OwnerPending,Type2OwnerUnsuccessful,Type2OwnerSuccessful,Type2OwnerBooked,Type2WithdrawalPending
 Acacia Breeze,Yishun,2-Room,2,350000,3-Room,2,450000,2025-02-15,2025-03-20,Jessica,3,David,true,,,,,,Daniel,John,,Sarah,,,Grace
-Slay Town,Yishun,2-Room,41,350000,3-Room,10,230000,2025-01-04,2025-06-04,Michael,5,"Daniel,Emily",false,,,David,,,,James,,,,,
+Slay Town,Hougang,2-Room,41,350000,3-Room,10,230000,2025-01-04,2025-06-04,Michael,5,"Daniel,Emily",true,,,David,,,,James,,,,,
+Pineapple Town,Hougang,2-Room,41,350000,3-Room,10,230000,2025-01-04,2025-06-04,Michael,5,"Daniel,Emily",false,,,David,,,,James,,,,,

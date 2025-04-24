@@ -1053,6 +1053,67 @@ class Enquiry {
  * Main system class in the system that contains user interaction and business logic
  */
 public class SDDA_grp3 {
+	
+	private static void changeFilter(User user, Scanner scanner) {
+        System.out.printf("Current filter: %s%n", user.getFilter());
+        System.out.print("Select new filter (empty for None, 2 for 2-Room, 3 for 3-Room, or enter Neighbourhood): ");
+        String newFilter = scanner.nextLine().trim();
+        
+        if (newFilter.isEmpty()) {
+            newFilter = "None";
+        } else if (newFilter.equals("2")) {
+            newFilter = "2-Room";
+        } else if (newFilter.equals("3")) {
+            newFilter = "3-Room";
+        }
+
+        user.setFilter(newFilter);
+        String filename = user.getCSVFilename();
+        List<? extends User> users = FileHandler.readUsersFromCSV(filename, user.getClass());
+        boolean success = FileHandler.writeUsersToCSV(filename, users);
+        
+        if (success) {
+            System.out.printf("Success, filter set to %s! Welcome %s.%n", newFilter, user.getName());
+        } else {
+            System.out.println("Failed to update filter.");
+        }
+    }
+	
+	private static void viewAllProjects(Manager manager, Scanner scanner) {
+        List<Project> allProjects = FileHandler.readProjectsFromCSV("ProjectList.csv");
+        List<EligibleEntry> entries = new ArrayList<>();
+        String filter = manager.getFilter();
+
+        for (Project project : allProjects) {
+            String type1 = project.getType1();
+            if (applyFilter(project, "Type1", filter)) {
+                String displayStr = String.format("%s\t\t%s\t\t%d", project.getProjectName(), type1, project.getPriceType1());
+                entries.add(new EligibleEntry(project, "Type1", displayStr));
+            }
+            String type2 = project.getType2();
+            if (applyFilter(project, "Type2", filter)) {
+                String displayStr = String.format("%s\t\t%s\t\t%d", project.getProjectName(), type2, project.getPriceType2());
+                entries.add(new EligibleEntry(project, "Type2", displayStr));
+            }
+        }
+
+        System.out.println("=============================================================");
+        System.out.printf("Current filter: %s%n", manager.getFilter());
+        System.out.println("Project Name\t\tType\t\tPrice");
+        for (EligibleEntry entry : entries) {
+            System.out.println(entry.displayString);
+        }
+        System.out.println("=============================================================");
+    }
+
+    private static boolean applyFilter(Project project, String typeDesignation, String filter) {
+        if (filter.equals("None")) return true;
+        if (filter.equals("2-Room")) return typeDesignation.equals("Type1");
+        if (filter.equals("3-Room")) return typeDesignation.equals("Type2");
+        return project.getNeighborhood().equalsIgnoreCase(filter);
+    }
+
+	
 	private static class BookableEntry {
         /**
          * Project containing bookable flat.
@@ -1660,21 +1721,26 @@ public class SDDA_grp3 {
 
     private static void viewEligibleProjects(User user, Scanner scanner) {
         List<Project> allProjects = FileHandler.readProjectsFromCSV("ProjectList.csv");
-        List<Project> visibleProjects = allProjects.stream().filter(Project::getVisibility).collect(Collectors.toList());
+        List<Project> visibleProjects = allProjects.stream()
+                .filter(Project::getVisibility)
+                .collect(Collectors.toList());
         List<EligibleEntry> eligibleEntries = new ArrayList<>();
+        String filter = user.getFilter();
 
         for (Project project : visibleProjects) {
             String type1 = project.getType1();
-            if (isEligibleForRoomType(user, type1)) {
+            if (isEligibleForRoomType(user, type1) && applyFilter(project, "Type1", filter)) {
                 String displayStr = String.format("%s\t\t%s\t\t%d", project.getProjectName(), type1, project.getPriceType1());
                 eligibleEntries.add(new EligibleEntry(project, "Type1", displayStr));
             }
             String type2 = project.getType2();
-            if (isEligibleForRoomType(user, type2)) {
+            if (isEligibleForRoomType(user, type2) && applyFilter(project, "Type2", filter)) {
                 String displayStr = String.format("%s\t\t%s\t\t%d", project.getProjectName(), type2, project.getPriceType2());
                 eligibleEntries.add(new EligibleEntry(project, "Type2", displayStr));
             }
         }
+
+        System.out.printf("Current filter: %s%n", user.getFilter());
 
         boolean canApply = true;
         String pendingMessage = null;
@@ -2172,14 +2238,18 @@ public class SDDA_grp3 {
                     System.out.println("7) Reply to Enquiries (Any Project)"); //Testing
                     System.out.println("8) View Enquiries"); // Testing
 					System.out.println("9) Approve Withdrawals");
+					System.out.println("10) Change Filter");
+					System.out.println("11) View all Projects");
                 } else if (user instanceof Officer) {
                     System.out.println("3) View Eligible Projects"); //Testing
                     System.out.println("4) Reply to Enquiries (Assigned Projects)"); //Testing
                     System.out.println("5) View Enquiries"); //Testing
 					System.out.println("6) Book Owner");
+					System.out.println("7) Change Filter");
                 } else if (user instanceof Applicant) {
                     System.out.println("3) View Eligible Projects"); // Testing
                     System.out.println("4) View Enquiries"); //Testing
+					System.out.println("5) Change Filter");
                 }
                 System.out.print("Choice: ");
                 String choice = scanner.nextLine().trim();
@@ -2229,6 +2299,8 @@ public class SDDA_grp3 {
                             editProject((Manager) user, scanner);
                         } else if (user instanceof Officer) { //Testing view for officer
                             viewEnquiries(user);
+						} else if (user instanceof Applicant) {
+							changeFilter(user, scanner);
                         } else {
                             System.out.println("Invalid choice.");
                         }
@@ -2245,7 +2317,9 @@ public class SDDA_grp3 {
                     case "7": //Testing reply
                         if (user instanceof Manager) {
                             replyToEnquiriesForManager((Manager) user);
-                        }
+                        } else if (user instanceof Officer) {
+							changeFilter(user, scanner);
+						}
                         break;
                     case "8": //Testing view
                         if (user instanceof Manager) {
@@ -2255,6 +2329,16 @@ public class SDDA_grp3 {
 						if (user instanceof Manager) {
 							approveWithdrawals((Manager) user, scanner);
                         }
+						break;
+					case "10":
+						if (user instanceof Manager) {
+							changeFilter((Manager) user, scanner);
+						}
+						break;
+					case "11":
+						if (user instanceof Manager) {
+							viewAllProjects((Manager) user, scanner);
+						}
 						break;
                     default:
                         System.out.println("Invalid choice.");
